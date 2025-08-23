@@ -1,0 +1,156 @@
+/* FORZAR TEMA OSCURO - SOBRESCRIBIR TODO */
+
+/* Forzar fondo oscuro en TODOS los elementos */
+* {
+    background-color: #1a202c !important;
+    color: #ffffff !important;
+}
+
+/* Modal y contenedores principales */
+.modal-content,
+.modal-dialog,
+.modal,
+.card,
+.container,
+.container-fluid,
+div,
+section,
+main,
+body,
+html {
+    background: #1a202c !important;
+    background-color: #1a202c !important;
+    color: #ffffff !important;
+}
+
+/* Headers específicos */
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background-color: #667eea !important;
+    color: #ffffff !important;
+}
+
+/* Body del modal */
+.modal-body {
+    background: #2d3748 !important;
+    background-color: #2d3748 !important;
+    color: #ffffff !important;
+}
+
+/* Todos los textos */
+h1, h2, h3, h4, h5, h6, p, span, div, small, label, a, strong, em, i {
+    color: #ffffff !important;
+}
+
+/* Inputs y formularios */
+input, textarea, select {
+    background: #1a202c !important;
+    background-color: #1a202c !important;
+    color: #ffffff !important;
+    border: 2px solid #4a5568 !important;
+}
+
+input:focus, textarea:focus, select:focus {
+    background: #1a202c !important;
+    background-color: #1a202c !important;
+    color: #ffffff !important;
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25) !important;
+}
+
+input::placeholder, textarea::placeholder {
+    color: #a0aec0 !important;
+}
+
+/* Botones */
+.btn {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    border: 2px solid !important;
+}
+
+.btn-primary, .btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    background-color: #10b981 !important;
+    border-color: #34d399 !important;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+    background-color: #8b5cf6 !important;
+    border-color: #a78bfa !important;
+}
+
+.btn-outline-secondary {
+    background: #4a5568 !important;
+    background-color: #4a5568 !important;
+    border-color: #718096 !important;
+    color: #e2e8f0 !important;
+}
+
+/* Iconos */
+.fas, .fa, i[class*="fa"] {
+    color: inherit !important;
+}
+
+/* Alertas y badges */
+.alert {
+    background: #742a2a !important;
+    background-color: #742a2a !important;
+    border-color: #fc8181 !important;
+    color: #fed7d7 !important;
+}
+
+.badge {
+    background: #4a5568 !important;
+    background-color: #4a5568 !important;
+    color: #90cdf4 !important;
+}
+
+/* Spinners */
+.spinner-border {
+    color: #10b981 !important;
+    border-color: #10b981 !important;
+}
+
+/* Form text y ayuda */
+.form-text, .text-muted {
+    color: #a0aec0 !important;
+}
+
+/* Links */
+a {
+    color: #90cdf4 !important;
+}
+
+a:hover {
+    color: #bee3f8 !important;
+}
+
+/* Sobrescribir cualquier fondo blanco */
+[style*="background: white"],
+[style*="background-color: white"],
+[style*="background: #fff"],
+[style*="background-color: #fff"],
+[style*="background: #ffffff"],
+[style*="background-color: #ffffff"] {
+    background: #1a202c !important;
+    background-color: #1a202c !important;
+}
+
+/* Sobrescribir texto negro */
+[style*="color: black"],
+[style*="color: #000"],
+[style*="color: #000000"] {
+    color: #ffffff !important;
+}
+
+/* Forzar bordes oscuros */
+* {
+    border-color: #4a5568 !important;
+}
+
+/* Asegurar que no haya fondos transparentes problemáticos */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+}

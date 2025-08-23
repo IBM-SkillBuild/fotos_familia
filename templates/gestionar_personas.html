@@ -1,0 +1,504 @@
+<!-- Gestionar Personas -->
+<div class="container-fluid" style="margin-top: 70px; padding: 2rem;">
+  
+  <!-- Header con controles -->
+  <div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h2 class="mb-1 text-white">
+          <i class="fas fa-users text-info me-2"></i>
+          Gestionar Personas
+        </h2>
+        <p class="text-muted mb-0">
+          {% if personas %}
+            {{ personas|length }} persona{{ 's' if personas|length != 1 else '' }} registrada{{ 's' if personas|length != 1 else '' }}
+          {% else %}
+            No hay personas registradas
+          {% endif %}
+        </p>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-success"
+                onclick="mostrarModalAgregarPersona()">
+          <i class="fas fa-plus me-2"></i>Agregar Persona
+        </button>
+        <button class="btn btn-outline-secondary"
+                hx-get="/selector_fotos"
+                hx-target="#panel-content"
+                hx-swap="innerHTML"
+                style="cursor: pointer;">
+          <i class="fas fa-arrow-left me-2"></i>Volver
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {% if personas %}
+    <!-- Grid de personas -->
+    <div class="row g-4">
+      {% for persona in personas %}
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+          <div class="card h-100 shadow-sm bg-white">
+            <!-- Imagen de la persona -->
+            <div style="width: 200px; height: 200px; overflow: hidden;">
+              {% if persona.imagen %}
+                <img src="{{ persona.imagen }}" 
+                     alt="{{ persona.nombre }}"
+                     style="width: 200px; height: 200px; object-fit: cover;"
+                     loading="lazy">
+              {% else %}
+                <div style="width: 200px; height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                  <i class="fas fa-user fa-4x text-white mb-2"></i>
+                  <small class="text-white-50">Sin foto</small>
+                </div>
+              {% endif %}
+            </div>
+            
+            <!-- Info de la persona -->
+            <div class="card-body position-relative">
+              <button class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2"
+                      onclick="eliminarPersona({{ persona.id }}, '{{ persona.nombre }}')"
+                      title="Eliminar persona">
+                🗑️
+              </button>
+              <div class="mb-2">
+                <h5 class="card-title mb-0">{{ persona.nombre }}</h5>
+              </div>
+              <div class="mb-2">
+                {% if persona.imagen %}
+                  <span class="badge bg-success">
+                    <i class="fas fa-camera me-1"></i>Con foto
+                  </span>
+                {% else %}
+                  <span class="badge bg-warning">
+                    <i class="fas fa-tag me-1"></i>Etiquetada
+                  </span>
+                {% endif %}
+              </div>
+              <small class="text-muted">
+                <i class="fas fa-calendar me-1"></i>
+                Agregada: {{ persona.created_at[:10] }}
+              </small>
+            </div>
+            
+            <!-- Acciones -->
+            <div class="card-footer bg-transparent">
+              <div class="d-flex gap-1 flex-wrap">
+                <button class="btn btn-primary btn-sm"
+                        onclick="verFotosPersona({{ persona.id }}, '{{ persona.nombre }}')">
+                  <i class="fas fa-images me-1"></i>Ver Fotos
+                </button>
+                {% if not persona.imagen %}
+                  <button class="btn btn-success btn-sm"
+                          onclick="agregarFotoPersona({{ persona.id }}, '{{ persona.nombre }}')">
+                    <i class="fas fa-camera me-1"></i>Agregar Foto
+                  </button>
+                {% endif %}
+                <button class="btn btn-outline-secondary btn-sm"
+                        onclick="editarPersona({{ persona.id }}, '{{ persona.nombre }}', '{{ persona.imagen or '' }}')">
+                  <i class="fas fa-edit me-1"></i>Editar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <!-- Estado vacío -->
+    <div class="text-center py-5">
+      <i class="fas fa-users fa-4x text-muted mb-3"></i>
+      <h4 class="text-muted">No hay personas registradas</h4>
+      <p class="text-muted mb-4">Agrega personas para habilitar el reconocimiento facial en las fotos</p>
+      <button class="btn btn-success"
+              onclick="mostrarModalAgregarPersona()">
+        <i class="fas fa-plus me-2"></i>Agregar Primera Persona
+      </button>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Modal personalizado para agregar/editar persona -->
+<div id="personaModal" class="custom-modal" style="display: none;">
+  <div class="custom-modal-backdrop" onclick="cerrarModal()"></div>
+  <div class="custom-modal-content">
+    <div class="custom-modal-header">
+      <h5 id="personaModalTitle">Agregar Persona</h5>
+      <button type="button" class="custom-modal-close" onclick="cerrarModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="custom-modal-body">
+      <form id="personaForm">
+        <input type="hidden" id="personaId" value="">
+        
+        <div class="mb-3">
+          <label for="personaNombre" class="form-label">Nombre *</label>
+          <input type="text" class="form-control" id="personaNombre" required>
+        </div>
+        
+        <div class="mb-3">
+          <label for="personaImagen" class="form-label">Foto de Referencia</label>
+          <input type="file" class="form-control" id="personaImagen" accept="image/*">
+          <div class="form-text">Sube una foto clara de la cara de la persona para el reconocimiento facial</div>
+        </div>
+        
+        <div id="imagenPreview" class="mb-3" style="display: none;">
+          <img id="previewImg" src="" alt="Preview" class="img-thumbnail" style="max-width: 200px;">
+        </div>
+      </form>
+    </div>
+    <div class="custom-modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button type="button" class="btn btn-success" onclick="guardarPersona()">
+        <i class="fas fa-save me-1"></i>Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function mostrarModalAgregarPersona() {
+  document.getElementById('personaModalTitle').textContent = 'Agregar Persona';
+  document.getElementById('personaForm').reset();
+  document.getElementById('personaId').value = '';
+  document.getElementById('imagenPreview').style.display = 'none';
+  
+  // Mostrar modal personalizado
+  const modal = document.getElementById('personaModal');
+  modal.style.display = 'flex';
+  setTimeout(() => {
+    modal.classList.add('show');
+  }, 10);
+  
+  // Prevenir scroll del body
+  document.body.style.overflow = 'hidden';
+}
+
+function editarPersona(id, nombre, imagen) {
+  document.getElementById('personaModalTitle').textContent = 'Editar Persona';
+  document.getElementById('personaId').value = id;
+  document.getElementById('personaNombre').value = nombre;
+  
+  if (imagen) {
+    document.getElementById('previewImg').src = imagen;
+    document.getElementById('imagenPreview').style.display = 'block';
+  } else {
+    document.getElementById('imagenPreview').style.display = 'none';
+  }
+  
+  // Mostrar modal personalizado
+  const modal = document.getElementById('personaModal');
+  modal.style.display = 'flex';
+  setTimeout(() => {
+    modal.classList.add('show');
+  }, 10);
+  
+  // Prevenir scroll del body
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarModal() {
+  const modal = document.getElementById('personaModal');
+  modal.classList.remove('show');
+  
+  setTimeout(() => {
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+  }, 300);
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+  // Preview de imagen
+  const imagenInput = document.getElementById('personaImagen');
+  if (imagenInput) {
+    imagenInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('previewImg').src = e.target.result;
+          document.getElementById('imagenPreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        document.getElementById('imagenPreview').style.display = 'none';
+      }
+    });
+  }
+  
+  // Cerrar modal con Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      cerrarModal();
+    }
+  });
+});
+
+async function guardarPersona() {
+  const id = document.getElementById('personaId').value;
+  const nombre = document.getElementById('personaNombre').value.trim();
+  const imagenFile = document.getElementById('personaImagen').files[0];
+  
+  console.log('Guardando persona:', {id, nombre, tieneImagen: !!imagenFile});
+  
+  if (!nombre) {
+    alert('El nombre es requerido');
+    return;
+  }
+  
+  try {
+    let imagenUrl = '';
+    
+    // Si hay una imagen nueva, subirla a Cloudinary
+    if (imagenFile) {
+      console.log('Subiendo imagen a Cloudinary...');
+      
+      const formData = new FormData();
+      formData.append('file', imagenFile);
+      formData.append('folder', 'personas'); // Carpeta específica para personas
+      
+      // Usar el mismo endpoint que las fotos normales
+      const uploadResponse = await fetch('/api/upload-person-image', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const uploadResult = await uploadResponse.json();
+      console.log('Resultado upload:', uploadResult);
+      
+      if (uploadResult.success && uploadResult.url) {
+        imagenUrl = uploadResult.url;
+        console.log('Imagen subida exitosamente:', imagenUrl);
+      } else {
+        console.error('Error subiendo imagen:', uploadResult);
+        alert('Error subiendo la imagen. Inténtalo de nuevo.');
+        return;
+      }
+    }
+    
+    // Si es edición y no hay imagen nueva, mantener la imagen actual
+    if (id && !imagenFile) {
+      const currentImg = document.getElementById('previewImg').src;
+      if (currentImg && currentImg !== window.location.href) {
+        imagenUrl = currentImg;
+      }
+    }
+    
+    // Guardar persona
+    console.log('Enviando datos al servidor:', {id, nombre, imagen_url: imagenUrl});
+    
+    const response = await fetch('/api/add-person', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: id || null,
+        nombre: nombre,
+        imagen_url: imagenUrl
+      })
+    });
+    
+    const result = await response.json();
+    console.log('Resultado guardar persona:', result);
+    
+    if (result.success) {
+      alert(result.message);
+      // Cerrar modal
+      cerrarModal();
+      // Recargar la página
+      htmx.ajax('GET', '/gestionar-personas', {target: '#panel-content', swap: 'innerHTML'});
+    } else {
+      alert(result.message || 'Error al guardar la persona');
+    }
+    
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Error al guardar la persona');
+  }
+}
+
+async function eliminarPersona(id, nombre) {
+  if (!confirm(`¿Estás seguro de que quieres eliminar a "${nombre}"? Esta acción no se puede deshacer.`)) {
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/delete-person', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        person_id: id
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Recargar la página
+      htmx.ajax('GET', '/gestionar-personas', {target: '#panel-content', swap: 'innerHTML'});
+    } else {
+      alert(result.message || 'Error al eliminar la persona');
+    }
+    
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Error al eliminar la persona');
+  }
+}
+
+function verFotosPersona(id, nombre) {
+  // Usar el endpoint de búsqueda para mostrar fotos de esta persona
+  htmx.ajax('GET', `/api/buscar-fotos-persona?buscar_persona=${encodeURIComponent(nombre)}`, {
+    target: '#panel-content',
+    swap: 'innerHTML'
+  });
+}
+</script>
+
+<style>
+.card {
+  transition: transform 0.2s ease;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.card-img-top {
+  transition: transform 0.3s ease;
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  object-position: center;
+}
+
+.card:hover .card-img-top {
+  transform: scale(1.05);
+}
+
+/* Asegurar que las imágenes mantengan proporción cuadrada */
+.persona-image-container {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #f8f9fa;
+}
+
+.persona-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Modal personalizado */
+.custom-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.custom-modal-content {
+  position: relative;
+  background: white;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 1051;
+}
+
+.custom-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  background: #f8f9fa;
+}
+
+.custom-modal-header h5 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.custom-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: #6c757d;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.custom-modal-close:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.custom-modal-body {
+  padding: 1rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.custom-modal-footer {
+  padding: 1rem;
+  border-top: 1px solid #dee2e6;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Animaciones */
+.custom-modal {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.custom-modal.show {
+  opacity: 1;
+}
+
+.custom-modal-content {
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
+}
+
+.custom-modal.show .custom-modal-content {
+  transform: scale(1);
+}
+</style>

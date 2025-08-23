@@ -1,0 +1,394 @@
+    <link
+      href="{{ url_for('static', filename='css/dark-theme-fixes.css') }}"
+      rel="stylesheet"
+    />
+<!-- Desktop Navigation - 100% WIDTH -->
+<nav id="main-navbar"
+  class="navbar navbar-dark bg-primary"
+  style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+    width: 100%;
+    margin: 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  "
+>
+  <div class="container-fluid">
+    <!-- Usuario a la izquierda -->
+    <div class="navbar-brand d-flex align-items-center">
+      <div
+        class="user-avatar bg-white text-primary rounded-circle d-inline-flex align-items-center justify-content-center me-3"
+        style="width: 40px; height: 40px; font-size: 18px; font-weight: bold"
+      >
+        {{ user.name[0].upper() }}
+      </div>
+      <div>
+        <div class="fw-bold">{{ user.name }}</div>
+        <small class="opacity-75">{{ user.email }}</small>
+      </div>
+    </div>
+
+    <!-- Botones a la derecha -->
+    <div class="d-flex">
+      <a
+        class="nav-link text-white"
+        hx-get="/dashboard"
+        hx-target="#panel-content"
+        hx-swap="innerHTML"
+        style="cursor: pointer"
+      >
+        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+      </a>
+      <a
+        class="nav-link text-white"
+        hx-get="/profile-content"
+        hx-target="#panel-content"
+        hx-swap="innerHTML"
+        style="cursor: pointer"
+      >
+        <i class="fas fa-user me-2"></i>Perfil
+      </a>
+      <a
+        class="nav-link text-white"
+        hx-get="/selector_fotos"
+        hx-target="#panel-content"
+        hx-swap="innerHTML"
+        style="cursor: pointer"
+      >
+        <i class="fas fa-images me-2"></i>Fotos
+      </a>
+      <a
+        class="nav-link text-white"
+        href="#"
+        onclick="logout()"
+        style="cursor: pointer"
+      >
+        <i class="fas fa-sign-out-alt me-2"></i>Salir
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile Navigation - SIMPLE Y FUNCIONAL -->
+<nav id="mobile-navbar" class="navbar navbar-dark bg-primary" style="position: fixed; top: 0; left: 0; right: 0; z-index: 1030; width: 100%; margin: 0; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+  <div class="container-fluid d-flex justify-content-between align-items-center">
+    <div class="navbar-brand d-flex align-items-center">
+      <div class="user-avatar bg-white text-primary rounded-circle d-inline-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; font-size: 16px; font-weight: bold">
+        {{ user.name[0].upper() }}
+      </div>
+      <div>
+        <div class="fw-bold">{{ user.name }}</div>
+        <small class="opacity-75">{{ user.email }}</small>
+      </div>
+    </div>
+
+    <!-- BOTÓN HAMBURGUESA SIMPLE -->
+    <button id="hamburger-btn" onclick="toggleMenu()" type="button" style="background: none; border: 2px solid white; padding: 8px; cursor: pointer; display: flex; flex-direction: column; gap: 4px;">
+      <span style="width: 25px; height: 3px; background: white; display: block;"></span>
+      <span style="width: 25px; height: 3px; background: white; display: block;"></span>
+      <span style="width: 25px; height: 3px; background: white; display: block;"></span>
+    </button>
+  </div>
+
+  <!-- MENÚ DESPLEGABLE SIMPLE -->
+  <div id="mobile-menu" style="display: none; background: #0d6efd; padding: 10px 0;">
+    <a href="#" onclick="closeMenu()" hx-get="/dashboard" hx-target="#panel-content" hx-swap="innerHTML" style="display: block; padding: 12px 20px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.1);">
+      <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+    </a>
+    <a href="#" onclick="closeMenu()" hx-get="/profile-content" hx-target="#panel-content" hx-swap="innerHTML" style="display: block; padding: 12px 20px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.1);">
+      <i class="fas fa-user me-2"></i>Perfil
+    </a>
+    <a href="#" onclick="closeMenu()" hx-get="/selector_fotos" hx-target="#panel-content" hx-swap="innerHTML" style="display: block; padding: 12px 20px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.1);">
+      <i class="fas fa-images me-2"></i>Fotos
+    </a>
+    <hr style="border-color: rgba(255,255,255,0.2); margin: 8px 20px;">
+    <a href="#" onclick="logout(); closeMenu();" style="display: block; padding: 12px 20px; color: white; text-decoration: none;">
+      <i class="fas fa-sign-out-alt me-2"></i>Salir
+    </a>
+  </div>
+</nav>
+
+<!-- Modal de confirmación de logout - siempre disponible -->
+<div class="modal fade" id="logoutModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirmar Cierre de Sesión</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">¿Estás seguro de que quieres cerrar sesión?</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-danger" onclick="confirmLogout()">
+          Cerrar Sesión
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content Area -->
+<div
+  id="main-content-area"
+  class="main-content-area"
+  style="
+    width: 100%;
+    min-height: 100vh;
+    background: #0f0f23;
+    position: relative;
+    overflow: hidden;
+    padding-top: 80px;
+  "
+>
+  <!-- Animated background -->
+  <div
+    style="
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(
+          circle at 20% 50%,
+          rgba(120, 119, 198, 0.3) 0%,
+          transparent 50%
+        ),
+        radial-gradient(
+          circle at 80% 20%,
+          rgba(255, 119, 198, 0.3) 0%,
+          transparent 50%
+        ),
+        radial-gradient(
+          circle at 40% 80%,
+          rgba(120, 219, 255, 0.3) 0%,
+          transparent 50%
+        );
+      animation: float 6s ease-in-out infinite;
+    "
+  ></div>
+
+  <div id="panel-content" class="w-100" style="position: relative; z-index: 1">
+    <div class="container">
+      <div class="text-center py-5">
+        <h2 class="mb-4" style="color: white">¡Bienvenvenido, {{ user.name }}!</h2>
+        <p class="lead mb-4" style="color: rgba(255, 255, 255, 0.7)">
+          Has iniciado sesión correctamente
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-mdb-ripple-init
+            hx-get="/selector_fotos"
+            hx-target="#panel-content"
+            hx-swap="innerHTML"
+          >
+            Acceso a Fotos de familia
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    33% {
+      transform: translateY(-10px) rotate(1deg);
+    }
+    66% {
+      transform: translateY(5px) rotate(-1deg);
+    }
+  }
+
+  /* Menú móvil simple */
+  #mobile-menu a:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  /* Control de visibilidad por tamaño de pantalla */
+  #main-navbar {
+    display: block;
+  }
+  #mobile-navbar {
+    display: none;
+  }
+  
+  @media (min-width: 992px) {
+    #main-navbar {
+      display: block !important;
+    }
+    #mobile-navbar {
+      display: none !important;
+    }
+  }
+  
+  @media (max-width: 991px) {
+    #main-navbar {
+      display: none !important;
+    }
+    #mobile-navbar {
+      display: block !important;
+    }
+    
+    /* Asegurar que el menú móvil esté visible */
+    #mobile-navbar {
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    /* Asegurar que el botón hamburguesa esté visible */
+    #mobile-menu-toggle {
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+  }
+
+  /* Ajustes para móviles */
+  @media (max-width: 576px) {
+    .navbar-nav .nav-link {
+      padding: 10px 15px;
+      font-size: 1rem;
+    }
+    
+    .navbar-brand .user-avatar {
+      width: 30px !important;
+      height: 30px !important;
+      font-size: 14px !important;
+    }
+    
+    .navbar-brand .fw-bold {
+      font-size: 0.9rem;
+    }
+    
+    .navbar-brand small {
+      font-size: 0.7rem;
+    }
+    
+    /* Asegurar que el menú móvil funcione en pantallas muy pequeñas */
+    .navbar-menu {
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
+    }
+    
+    .navbar-menu .nav-link {
+      padding: 15px 20px;
+      font-size: 1.1rem;
+    }
+  }
+  
+  /* Estilos para dispositivos táctiles */
+  @media (hover: none) and (pointer: coarse) {
+    .navbar-menu .nav-link {
+      padding: 16px 20px; /* Mayor área de toque */
+    }
+    
+    #mobile-menu-toggle {
+      padding: 12px; /* Mayor área de toque para el botón */
+    }
+  }
+  
+  /* Estilos adicionales para asegurar visibilidad */
+  #mobile-navbar .container-fluid {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+  
+  #mobile-menu-toggle {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+  
+
+</style>
+
+<script>
+  setPageTitle("Panel Principal - {{ user.name }}");
+  
+  // Mostrar navbar cuando se carga el panel principal (después de autenticación)
+  const navbar = document.querySelector('#navbar-container');
+  if (navbar) {
+    navbar.style.display = 'block';
+  }
+
+  // Efecto de transparencia en navbar al hacer scroll
+  window.addEventListener("scroll", function () {
+    const navbar = document.querySelector(".navbar");
+    if (navbar) {
+      if (window.scrollY > 50) {
+        navbar.style.backgroundColor = "rgba(13, 110, 253, 0.9)";
+        navbar.style.backdropFilter = "blur(10px)";
+      } else {
+        navbar.style.backgroundColor = "#0d6efd";
+        navbar.style.backdropFilter = "none";
+      }
+    }
+  });
+
+  function ocultar_nav(){
+    document
+      .getElementById("mobile-navbar")
+      .style.display = "none";
+    document
+  }
+
+  // Menú hamburguesa SIMPLE - 3 líneas de código
+  function toggleMenu() {
+    const menu = document.getElementById('mobile-menu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function closeMenu() {
+    document.getElementById('mobile-menu').style.display = 'none';
+  }
+
+  function logout() {
+    const modal = new bootstrap.Modal(document.getElementById("logoutModal"));
+    modal.show();
+  }
+
+  async function confirmLogout() {
+    try {
+      const button = event.target;
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = "Cerrando...";
+
+      const response = await fetch("/logout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          window.location.href = data.redirect || "/";
+        } else {
+          throw new Error("Logout failed");
+        }
+      } else {
+        throw new Error(`HTTP ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+      window.location.href = "/";
+    }
+  }
+
+
+</script>

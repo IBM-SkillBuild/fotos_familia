@@ -1,0 +1,107 @@
+<div
+  class="container-fluid vh-100 vw-100 d-flex align-items-center justify-content-center"
+  style="
+    background: #0f0f23;
+    margin: 0;
+    padding: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    width: 100vw;
+    height: 100vh;
+  "
+>
+  <div class="text-center" id="auth-container">
+    <div class="mb-4">
+      <h1
+        class="display-4 mb-3"
+        style="
+          color: white;
+          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+          font-weight: 300;
+        "
+      >
+        📱 Auth System
+      </h1>
+      <p
+        class="lead"
+        style="
+          color: rgba(255, 255, 255, 0.9);
+          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        "
+      >
+        Autenticación segura por email
+      </p>
+    </div>
+
+    <div
+      class="card shadow-lg"
+      style="
+        max-width: 400px;
+        border: none;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95);
+      "
+    >
+      <div class="card-body p-4">
+        <h5 class="card-title mb-3 text-center">🔐 Acceso Requerido</h5>
+        <p class="card-text text-muted mb-4 text-center">
+          Haz clic en <strong>GO</strong> para iniciar sesión o crear tu cuenta
+        </p>
+
+        <button
+          class="btn btn-lg w-100"
+          hx-get="/auth-modal"
+          hx-target="#auth-container"
+          hx-swap="innerHTML"
+          onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 12px 35px rgba(40, 167, 69, 0.6)'"
+          onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(40, 167, 69, 0.4)'"
+          style="
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            color: white;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.8rem;
+            padding: 20px 40px;
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+          "
+        >
+          🚀 GO
+        </button>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <small
+        style="
+          color: rgba(255, 255, 255, 0.8);
+          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        "
+      >
+        🔒 Autenticación segura mediante código de email
+      </small>
+    </div>
+  </div>
+</div>
+
+<script>
+  setPageTitle("Iniciar Sesión - Email Auth");
+  
+  // Ocultar navbar cuando se muestra la página de autenticación
+  const navbar = document.querySelector('#navbar-container');
+  if (navbar) {
+    navbar.style.display = 'none';
+  }
+  
+  // Remover cualquier barra de herramientas de galería
+  const galleryNavbar = document.getElementById('gallery-navbar-row');
+  if (galleryNavbar) {
+    galleryNavbar.remove();
+  }
+</script>

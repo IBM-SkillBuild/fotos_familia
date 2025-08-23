@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Allow: /static/
+
+# Páginas que no deben indexarse
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard
+Disallow: /main
+Disallow: /profile
+Disallow: /logout
+
+# Sitemap (si lo creas en el futuro)
+# Sitemap: https://tudominio.com/sitemap.xml

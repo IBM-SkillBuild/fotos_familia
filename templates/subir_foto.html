@@ -1,0 +1,842 @@
+    <link
+      href="{{ url_for('static', filename='css/dark-theme-fixes.css') }}"
+      rel="stylesheet"
+    />
+<!-- Subir Foto -->
+<div class="container-fluid">
+  <div class="row justify-content-center" style="margin-top: 2em">
+    <div class="col-md-8 col-lg-6">
+      <div class="card" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2);">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-upload me-2"></i>Subir Nueva Foto
+          </h5>
+          <button class="btn btn-outline-light btn-sm"
+                  hx-get="/selector_fotos"
+                  hx-target="#panel-content"
+                  hx-swap="innerHTML"
+                  style="cursor: pointer;">
+            <i class="fas fa-times me-1"></i>Salir
+          </button>
+        </div>
+
+        <div class="card-body">
+          <!-- Área de carga de archivos -->
+          <div
+            class="upload-area border-2 border-dashed border-primary rounded p-4 text-center mb-4"
+            id="uploadArea"
+            style="
+              min-height: 200px;
+              cursor: pointer;
+              transition: all 0.3s ease;
+            "
+          >
+            <!-- Input de archivo oculto -->
+            <input
+              type="file"
+              id="photoInput"
+              accept="image/*"
+              capture="environment"
+              multiple
+              style="display: none"
+            />
+
+            <!-- Contenido del área de carga -->
+            <div id="uploadContent">
+              <i class="fas fa-cloud-upload-alt fa-4x text-primary mb-3"></i>
+              <h5>Selecciona o arrastra tus fotos aquí</h5>
+              <p class="text-muted mb-3">
+                Formatos soportados: JPG, PNG, WEBP<br />
+                Tamaño máximo: 10MB por foto
+              </p>
+
+              <!-- Botones de acción -->
+              <div class="d-grid gap-2 d-md-block">
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  onclick="event.stopPropagation(); selectFiles();"
+                >
+                  <i class="fas fa-folder-open me-2"></i>Seleccionar Archivos
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  onclick="event.stopPropagation(); takePhoto();"
+                >
+                  <i class="fas fa-camera me-2"></i>Tomar Foto
+                </button>
+              </div>
+            </div>
+
+            <!-- Vista previa de fotos -->
+            <div id="previewContainer" style="display: none">
+              <h6 class="mb-3">Fotos seleccionadas:</h6>
+              <div id="photoPreview" class="row g-2"></div>
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm mt-3"
+                onclick="clearSelection()"
+              >
+                <i class="fas fa-times me-1"></i>Limpiar selección
+              </button>
+            </div>
+          </div>
+
+          <!-- Lista simple de fotos -->
+          <div id="photoListContainer" style="display: none">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="mb-0">
+                <i class="fas fa-images me-2"></i>Fotos a subir (<span
+                  id="photoCount"
+                  >0</span
+                >)
+              </h6>
+              <button
+                type="button"
+                class="btn btn-outline-danger btn-sm"
+                onclick="removeAllPhotos()"
+                title="Eliminar todas las fotos"
+              >
+                <i class="fas fa-trash me-1"></i>Eliminar todas
+              </button>
+            </div>
+            <div id="photoList" class="mb-4"></div>
+
+            <!-- Botones de acción -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                onclick="cancelUpload()"
+              >
+                <i class="fas fa-times me-2"></i>Cancelar
+              </button>
+              <button
+                type="button"
+                class="btn btn-success"
+                id="uploadBtn"
+                onclick="uploadPhotos()"
+              >
+                <span class="btn-text">
+                  <i class="fas fa-upload me-2"></i>Subir Fotos
+                </span>
+                <span
+                  class="spinner-border spinner-border-sm d-none"
+                  role="status"
+                ></span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Barra de progreso -->
+          <div id="progressContainer" style="display: none" class="mt-3">
+            <div class="progress">
+              <div
+                class="progress-bar progress-bar-striped progress-bar-animated"
+                id="uploadProgress"
+                role="progressbar"
+                style="width: 0%"
+              ></div>
+            </div>
+            <small class="text-muted mt-1 d-block" id="progressText"
+              >Preparando subida...</small
+            >
+          </div>
+
+          <!-- Alertas -->
+          <div id="uploadAlerts" class="mt-3"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedFiles = [];
+
+  // Configurar área de drag & drop
+  const uploadArea = document.getElementById("uploadArea");
+  const photoInput = document.getElementById("photoInput");
+
+  // Eventos de drag & drop
+  uploadArea.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    uploadArea.style.backgroundColor = "#f8f9fa";
+    uploadArea.style.borderColor = "#0d6efd";
+  });
+
+  uploadArea.addEventListener("dragleave", (e) => {
+    e.preventDefault();
+    uploadArea.style.backgroundColor = "";
+    uploadArea.style.borderColor = "";
+  });
+
+  uploadArea.addEventListener("drop", (e) => {
+    e.preventDefault();
+    uploadArea.style.backgroundColor = "";
+    uploadArea.style.borderColor = "";
+
+    const files = Array.from(e.dataTransfer.files);
+    handleFiles(files);
+  });
+
+  // Click en área de carga (solo si no es un botón)
+  uploadArea.addEventListener("click", (e) => {
+    // Solo activar si se hizo click en el área pero no en un botón
+    if (
+      !e.target.closest("button") &&
+      (e.target === uploadArea || e.target.closest("#uploadContent"))
+    ) {
+      e.preventDefault();
+      e.stopPropagation();
+      selectFiles();
+    }
+  });
+
+  // Seleccionar archivos
+  function selectFiles() {
+    console.log("selectFiles() called");
+    // Limpiar el valor del input para asegurar que el evento change se dispare
+    photoInput.value = "";
+    // Remover el atributo capture si existe
+    photoInput.removeAttribute("capture");
+    // Usar setTimeout para evitar conflictos con otros eventos
+    setTimeout(() => {
+      photoInput.click();
+    }, 10);
+  }
+
+  // Tomar foto (PWA ready)
+  function takePhoto() {
+    console.log("takePhoto() called");
+    // Limpiar el valor del input para asegurar que el evento change se dispare
+    photoInput.value = "";
+    // Configurar input para cámara
+    photoInput.setAttribute("capture", "environment");
+    // Usar setTimeout para evitar conflictos con otros eventos
+    setTimeout(() => {
+      photoInput.click();
+    }, 10);
+  }
+
+  // Manejar cambio en input de archivos (solo una vez)
+  let isProcessing = false;
+  photoInput.addEventListener("change", (e) => {
+    console.log("Input change event triggered, files:", e.target.files.length);
+
+    // Evitar procesamiento duplicado
+    if (isProcessing) {
+      console.log("Already processing, skipping...");
+      return;
+    }
+
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      isProcessing = true;
+      handleFiles(files);
+      // Resetear flag después de un breve delay
+      setTimeout(() => {
+        isProcessing = false;
+      }, 1000);
+    }
+  });
+
+  // Procesar archivos seleccionados
+  function handleFiles(files) {
+    console.log("Processing files:", files.length);
+
+    if (!files || files.length === 0) {
+      console.log("No files to process");
+      return;
+    }
+
+    const validFiles = files.filter((file) => {
+      // Validar tipo de archivo
+      if (!file.type.startsWith("image/")) {
+        showAlert(`El archivo ${file.name} no es una imagen válida`, "warning");
+        return false;
+      }
+
+      // Validar tamaño (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        showAlert(
+          `El archivo ${file.name} es demasiado grande (máximo 10MB)`,
+          "warning"
+        );
+        return false;
+      }
+
+      return true;
+    });
+
+    console.log("Valid files:", validFiles.length);
+
+    if (validFiles.length > 0) {
+      selectedFiles = validFiles;
+      showPreview();
+      showForm();
+    } else {
+      showAlert("No se seleccionaron archivos válidos", "warning");
+    }
+  }
+
+  // Mostrar vista previa
+  function showPreview() {
+    const uploadContent = document.getElementById("uploadContent");
+    const previewContainer = document.getElementById("previewContainer");
+    const photoPreview = document.getElementById("photoPreview");
+
+    uploadContent.style.display = "none";
+    previewContainer.style.display = "block";
+
+    photoPreview.innerHTML = "";
+
+    selectedFiles.forEach((file, index) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const col = document.createElement("div");
+        col.className = "col-6 col-md-4 col-lg-3 d-flex";
+        col.innerHTML = `
+        <div class="card h-100">
+          <img src="${e.target.result}" class="card-img-top" style="height: 120px; object-fit: cover;">
+          <div class="card-body p-2 d-flex flex-column">
+            <small class="text-muted flex-grow-1 d-flex align-items-center" style="min-height: 2.5rem; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${file.name}</small>
+            <button type="button" class="btn btn-sm btn-outline-danger w-100 mt-auto preview-remove-btn" 
+                    onclick="removeFile(${index})" title="Eliminar foto">
+              <i class="fas fa-trash me-1"></i>Quitar
+            </button>
+          </div>
+        </div>
+      `;
+        photoPreview.appendChild(col);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Mostrar lista simple de fotos
+  function showForm() {
+    const container = document.getElementById("photoListContainer");
+    const photoList = document.getElementById("photoList");
+    const photoCount = document.getElementById("photoCount");
+
+    container.style.display = "block";
+    photoCount.textContent = selectedFiles.length;
+
+    // Limpiar lista anterior
+    photoList.innerHTML = "";
+
+    // Crear una fila para cada foto
+    selectedFiles.forEach((file, index) => {
+      const photoRow = document.createElement("div");
+      photoRow.className =
+        "photo-row d-flex align-items-center p-3 mb-2 border rounded";
+      photoRow.innerHTML = `
+        <div class="photo-thumbnail me-3" id="thumbnail-${index}">
+          <div class="spinner-border spinner-border-sm" role="status"></div>
+        </div>
+        
+        <div class="flex-grow-1">
+          <div class="row g-2">
+            <div class="col-md-5">
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                id="photoName-${index}"
+                placeholder="Nombre de la foto (opcional)"
+                value="${getFileNameWithoutExtension(file.name)}"
+              />
+            </div>
+            <div class="col-md-3">
+              <select class="form-select form-select-sm" id="photoMonth-${index}">
+                ${generateMonthOptions()}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <input
+                type="number"
+                class="form-control form-control-sm"
+                id="photoYear-${index}"
+                min="1900"
+                max="2030"
+                placeholder="Año"
+                value="${new Date().getFullYear()}"
+              />
+            </div>
+            <div class="col-md-2 text-end">
+              <button type="button" class="btn btn-outline-danger btn-sm remove-btn" 
+                      onclick="removeFileFromList(${index})" 
+                      title="Eliminar esta foto"
+                      data-filename="${file.name}">
+                <i class="fas fa-trash me-1"></i>Quitar
+              </button>
+            </div>
+          </div>
+          <small class="text-muted">
+            <i class="fas fa-file me-1"></i>
+            ${file.name} (${formatFileSize(file.size)})
+          </small>
+        </div>
+      `;
+
+      photoList.appendChild(photoRow);
+
+      // Generar thumbnail
+      generateThumbnail(file, index);
+    });
+  }
+
+  // Generar thumbnail para cada foto
+  function generateThumbnail(file, index) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const thumbnail = document.getElementById(`thumbnail-${index}`);
+      if (thumbnail) {
+        thumbnail.innerHTML = `
+          <img src="${e.target.result}" 
+               class="img-thumbnail" 
+               style="width: 60px; height: 60px; object-fit: cover;"
+               title="${file.name}">
+        `;
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Función para confirmar eliminación con mejor UX
+  function confirmRemoval(fileName, callback) {
+    const modal = document.createElement("div");
+    modal.className = "modal fade";
+    modal.innerHTML = `
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h6 class="modal-title">Confirmar eliminación</h6>
+          </div>
+          <div class="modal-body">
+            <p class="mb-2">¿Eliminar esta foto?</p>
+            <small class="text-muted">${fileName}</small>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-sm btn-danger" onclick="confirmCallback()">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    const bootstrapModal = new bootstrap.Modal(modal);
+
+    window.confirmCallback = () => {
+      callback();
+      bootstrapModal.hide();
+      document.body.removeChild(modal);
+      delete window.confirmCallback;
+    };
+
+    bootstrapModal.show();
+  }
+
+  // Obtener nombre de archivo sin extensión
+  function getFileNameWithoutExtension(filename) {
+    return filename.substring(0, filename.lastIndexOf(".")) || filename;
+  }
+
+  // Generar opciones de mes con el mes actual seleccionado
+  function generateMonthOptions() {
+    const currentMonth = new Date().getMonth() + 1; // getMonth() devuelve 0-11, necesitamos 1-12
+    const months = [
+      { value: 1, name: "Enero" },
+      { value: 2, name: "Febrero" },
+      { value: 3, name: "Marzo" },
+      { value: 4, name: "Abril" },
+      { value: 5, name: "Mayo" },
+      { value: 6, name: "Junio" },
+      { value: 7, name: "Julio" },
+      { value: 8, name: "Agosto" },
+      { value: 9, name: "Septiembre" },
+      { value: 10, name: "Octubre" },
+      { value: 11, name: "Noviembre" },
+      { value: 12, name: "Diciembre" },
+    ];
+
+    let options = '<option value="">Mes</option>';
+    months.forEach((month) => {
+      const selected = month.value === currentMonth ? "selected" : "";
+      options += `<option value="${month.value}" ${selected}>${month.name}</option>`;
+    });
+
+    return options;
+  }
+
+  // Formatear tamaño de archivo
+  function formatFileSize(bytes) {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  }
+
+  // Remover archivo desde la vista previa
+  function removeFile(index) {
+    const fileName = selectedFiles[index].name;
+    if (confirm(`¿Estás seguro de que quieres eliminar "${fileName}"?`)) {
+      selectedFiles.splice(index, 1);
+      if (selectedFiles.length === 0) {
+        clearSelection();
+      } else {
+        showPreview();
+        showForm();
+      }
+      showAlert(`Foto "${fileName}" eliminada`, "info");
+    }
+  }
+
+  // Remover archivo desde la lista con animación
+  function removeFileFromList(index) {
+    const fileName = selectedFiles[index].name;
+    const photoRow = document.querySelector(
+      `#photoList .photo-row:nth-child(${index + 1})`
+    );
+
+    // Animación de salida
+    if (photoRow) {
+      photoRow.style.transition = "all 0.3s ease";
+      photoRow.style.opacity = "0";
+      photoRow.style.transform = "translateX(100px)";
+
+      setTimeout(() => {
+        selectedFiles.splice(index, 1);
+        if (selectedFiles.length === 0) {
+          clearSelection();
+        } else {
+          showPreview();
+          showForm();
+        }
+        showAlert(`Foto "${fileName}" eliminada`, "info");
+      }, 300);
+    } else {
+      // Fallback sin animación
+      selectedFiles.splice(index, 1);
+      if (selectedFiles.length === 0) {
+        clearSelection();
+      } else {
+        showPreview();
+        showForm();
+      }
+      showAlert(`Foto "${fileName}" eliminada`, "info");
+    }
+  }
+
+  // Función para eliminar todas las fotos
+  function removeAllPhotos() {
+    if (selectedFiles.length === 0) return;
+
+    if (
+      confirm(
+        `¿Estás seguro de que quieres eliminar todas las ${selectedFiles.length} fotos?`
+      )
+    ) {
+      clearSelection();
+      showAlert("Todas las fotos han sido eliminadas", "info");
+    }
+  }
+
+  // Limpiar selección
+  function clearSelection() {
+    selectedFiles = [];
+    document.getElementById("uploadContent").style.display = "block";
+    document.getElementById("previewContainer").style.display = "none";
+    document.getElementById("photoListContainer").style.display = "none";
+    photoInput.value = "";
+  }
+
+  // Cancelar subida
+  function cancelUpload() {
+    clearSelection();
+  }
+
+  // Mostrar alerta
+  function showAlert(message, type = "info") {
+    const alertContainer = document.getElementById("uploadAlerts");
+    alertContainer.innerHTML = `
+    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+  }
+
+  // Función para subir fotos
+  async function uploadPhotos() {
+    if (selectedFiles.length === 0) {
+      showAlert("No hay fotos seleccionadas", "warning");
+      return;
+    }
+
+    // Recopilar datos de todos los formularios
+    const photosData = [];
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const name = document.getElementById(`photoName-${i}`).value.trim();
+      const month = document.getElementById(`photoMonth-${i}`).value;
+      const year = document.getElementById(`photoYear-${i}`).value;
+
+      photosData.push({
+        file: selectedFiles[i],
+        nombre: name || getFileNameWithoutExtension(selectedFiles[i].name), // Nombre preferido por el usuario
+        nombre_archivo: selectedFiles[i].name, // Nombre real del archivo
+        month: month || null,
+        year: year || null,
+      });
+    }
+
+    console.log("Photos data to upload:", photosData);
+
+    // Mostrar progreso
+    const uploadBtn = document.getElementById("uploadBtn");
+    const btnText = uploadBtn.querySelector(".btn-text");
+    const spinner = uploadBtn.querySelector(".spinner-border");
+    const progressContainer = document.getElementById("progressContainer");
+    const progressBar = document.getElementById("uploadProgress");
+    const progressText = document.getElementById("progressText");
+    
+    console.log("Elementos encontrados:", {
+      progressContainer: !!progressContainer,
+      progressBar: !!progressBar,
+      progressText: !!progressText
+    });
+
+    // Deshabilitar botón y mostrar spinner
+    console.log("Mostrando progreso...");
+    uploadBtn.disabled = true;
+    btnText.style.display = "none";
+    spinner.classList.remove("d-none");
+    progressContainer.style.display = "block";
+    console.log("Progreso mostrado:", progressContainer.style.display);
+
+    try {
+      // Crear FormData para enviar archivos y metadatos
+      const formData = new FormData();
+
+      // Agregar archivos y metadatos
+      for (let i = 0; i < photosData.length; i++) {
+        const photoData = photosData[i];
+
+        // Agregar archivo
+        formData.append("files", photoData.file);
+
+        // Agregar metadatos correspondientes
+        formData.append("nombres", photoData.nombre);
+        formData.append("nombres_archivo", photoData.nombre_archivo);
+        formData.append("meses", photoData.month || "");
+        formData.append("años", photoData.year || "");
+      }
+
+      console.log("Enviando", photosData.length, "fotos al servidor...");
+      progressText.textContent = "Enviando fotos al servidor...";
+
+      // Enviar al servidor
+      const response = await fetch("/api/upload-photos", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Mostrar progreso por foto subida
+        const uploadedCount = result.stats.success_count;
+        const failedCount = result.stats.failed_count;
+
+        for (let i = 0; i < uploadedCount; i++) {
+          const progress = Math.round(((i + 1) / uploadedCount) * 100);
+          progressBar.style.width = progress + "%";
+          progressText.textContent = `Procesando foto ${
+            i + 1
+          } de ${uploadedCount}...`;
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+
+        progressBar.style.width = "100%";
+        progressText.textContent = "¡Subida completada!";
+
+        // Mostrar mensaje con detalles
+        let message = result.message;
+        let alertType = "success";
+
+        if (failedCount > 0) {
+          alertType = "warning";
+          message += "\n\nErrores encontrados:";
+          result.failed_uploads.forEach((failure) => {
+            message += `\n• ${failure.filename}: ${failure.error}`;
+          });
+        }
+
+        showAlert(message, alertType);
+
+        setTimeout(() => {
+          clearSelection();
+          // Redirigir a la galería de fotos recientes con los IDs de las fotos subidas
+          const uploadedIds = result.uploaded_photos.map(photo => photo.id).join(',');
+          htmx.ajax('GET', `/fotos-recien-subidas?ids=${uploadedIds}`, {target: '#panel-content', swap: 'innerHTML'});
+        }, 2000);
+      } else {
+        throw new Error(result.message || "Error desconocido");
+      }
+    } catch (error) {
+      console.error("Error uploading photos:", error);
+      showAlert("Error al subir las fotos. Inténtalo de nuevo.", "danger");
+    } finally {
+      // Restaurar botón
+      uploadBtn.disabled = false;
+      btnText.style.display = "inline";
+      spinner.classList.add("d-none");
+      progressContainer.style.display = "none";
+    }
+  }
+</script>
+
+<style>
+  .upload-area:hover {
+    background-color: #f8f9fa !important;
+    border-color: #0d6efd !important;
+  }
+
+  .upload-area.dragover {
+    background-color: #e3f2fd !important;
+    border-color: #1976d2 !important;
+  }
+
+  #photoPreview img {
+    border-radius: 4px;
+  }
+
+  /* Altura uniforme para las cards de vista previa */
+  #photoPreview .card {
+    height: 100%;
+    min-height: 200px;
+  }
+
+  #photoPreview .card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 80px;
+  }
+
+  #photoPreview .card-body small {
+    word-wrap: break-word;
+    hyphens: auto;
+    line-height: 1.2;
+  }
+
+  .preview-remove-btn {
+    transition: all 0.2s ease;
+    font-size: 0.8rem;
+    margin-top: auto;
+  }
+
+  .preview-remove-btn:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  .progress {
+    height: 8px;
+  }
+
+  .photo-thumbnail {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    flex-shrink: 0;
+  }
+
+  .photo-thumbnail img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 2px solid #dee2e6;
+  }
+
+  .photo-row {
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+  }
+
+  .photo-row:hover {
+    background-color: #e9ecef;
+    border-color: #198754 !important;
+  }
+
+  #photoList .form-control,
+  #photoList .form-select {
+    border: 1px solid #ced4da;
+    font-size: 0.9rem;
+  }
+
+  #photoList .form-control:focus,
+  #photoList .form-select:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+  }
+
+  /* Estilos para botones de eliminar */
+  .remove-btn {
+    transition: all 0.2s ease;
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .remove-btn:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    transform: scale(1.05);
+  }
+
+  .photo-row.removing {
+    opacity: 0;
+    transform: translateX(100px);
+    transition: all 0.3s ease;
+  }
+
+  /* Animación de entrada para las filas */
+  .photo-row {
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Mejorar el botón de eliminar todas */
+  #photoListContainer .btn-outline-danger {
+    transition: all 0.2s ease;
+  }
+
+  #photoListContainer .btn-outline-danger:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+  }
+</style>

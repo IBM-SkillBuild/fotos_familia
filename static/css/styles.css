@@ -1,0 +1,643 @@
+/* ===== CSS RESET / NORMALIZE ===== */
+/* Asegurar consistencia entre navegadores */
+* {
+  box-sizing: border-box;
+}
+
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  line-height: 1.15;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background-attachment: fixed !important;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Eliminar márgenes y padding por defecto */
+h1, h2, h3, h4, h5, h6,
+p, blockquote, pre,
+dl, dd, ol, ul,
+figure, hr,
+fieldset, legend {
+  margin: 0;
+  padding: 0;
+}
+
+/* Listas sin estilos por defecto */
+ol, ul {
+  list-style: none;
+}
+
+/* Enlaces sin decoración por defecto */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Botones consistentes */
+button {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Inputs consistentes */
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Imágenes responsive por defecto */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Tablas sin espaciado */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* Prevenir overflow horizontal global */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* ===== ESTILOS PARA AUTENTICACIÓN ===== */
+.auth-container {
+  max-width: 400px;
+  margin: 100px auto;
+}
+
+.verification-step,
+.auth-step {
+  display: none;
+}
+
+.verification-step.active,
+.auth-step.active {
+  display: block;
+}
+
+.auth-container .alert {
+  margin-top: 15px;
+}
+
+/* ===== ESTILOS PARA DASHBOARD ===== */
+.dashboard-header {
+  background: #667eea;
+  background: -webkit-linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: -moz-linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: -o-linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 10px 10px 0 0;
+  -webkit-border-radius: 10px 10px 0 0;
+  -moz-border-radius: 10px 10px 0 0;
+}
+
+.user-info-card {
+  border: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.feature-card {
+  transition: transform 0.2s ease;
+  -webkit-transition: -webkit-transform 0.2s ease;
+  -moz-transition: -moz-transform 0.2s ease;
+  -o-transition: -o-transform 0.2s ease;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  -webkit-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  -moz-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+  -webkit-transform: translateY(-2px);
+  -moz-transform: translateY(-2px);
+  -ms-transform: translateY(-2px);
+  -o-transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  -webkit-box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  -moz-box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.status-badge {
+  background: #28a745;
+  background: -webkit-linear-gradient(45deg, #28a745, #20c997);
+  background: -moz-linear-gradient(45deg, #28a745, #20c997);
+  background: -o-linear-gradient(45deg, #28a745, #20c997);
+  background: linear-gradient(45deg, #28a745, #20c997);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  -webkit-border-radius: 20px;
+  -moz-border-radius: 20px;
+  font-size: 0.9em;
+}
+
+.info-table td {
+  padding: 8px 0;
+  border: none;
+}
+
+.session-info {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.alert-sm {
+  font-size: 0.85em;
+}
+
+/* ===== ESTILOS PARA BOTONES ===== */
+.logout-btn {
+  background: linear-gradient(45deg, #dc3545, #c82333);
+  background: -webkit-linear-gradient(45deg, #dc3545, #c82333);
+  background: -moz-linear-gradient(45deg, #dc3545, #c82333);
+  border: none;
+  transition: all 0.3s ease;
+  -webkit-transition: all 0.3s ease;
+  -moz-transition: all 0.3s ease;
+  -o-transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  transform: scale(1.05);
+  -webkit-transform: scale(1.05);
+  -moz-transform: scale(1.05);
+  -ms-transform: scale(1.05);
+  -o-transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+  -webkit-box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+  -moz-box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+  .auth-container {
+    margin: 50px auto;
+    max-width: 90%;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+    padding: 1rem;
+  }
+
+  .navbar-nav .nav-link {
+    margin: 0.25rem 0;
+  }
+}
+
+/* ===== COMPATIBILIDAD ENTRE NAVEGADORES ===== */
+/* Flexbox fixes para IE11 */
+.d-flex {
+  display: -webkit-box !important;
+  display: -ms-flexbox !important;
+  display: flex !important;
+}
+
+/* Grid fallback para navegadores antiguos */
+@supports not (display: grid) {
+  .container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+  }
+}
+
+/* Smooth scrolling con fallback */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Webkit scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Firefox scrollbar styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* ===== ESTILOS PARA HTMX ===== */
+.htmx-indicator {
+  display: none;
+}
+
+.htmx-request .htmx-indicator {
+  display: inline-block;
+}
+
+.htmx-request .btn-text {
+  display: none;
+}
+
+/* Ocultar indicadores HTMX en body y modales */
+body.htmx-request .htmx-indicator,
+.modal .htmx-indicator {
+  display: none !important;
+}
+
+/* ===== ESTILOS PARA MAIN PANEL ===== */
+.main-panel-wrapper {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  z-index: 1029;
+}
+
+.main-panel-wrapper .navbar {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1030;
+  background-color: rgba(102, 126, 234, 0.8);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: height 0.3s ease, padding 0.3s ease;
+  overflow: visible;
+  min-height: 56px;
+  height: 56px;
+}
+
+/* Asegurar opacidad 1 para navbar en galería de fotos */
+.navbar.navbar-expand-lg.navbar-dark.bg-dark.fixed-top {
+  opacity: 1 !important;
+  background-color: #212529 !important;
+}
+
+/* Asegurar opacidad 1 para controles fijos en galería */
+.fixed-top-controls {
+  opacity: 1 !important;
+  background-color: #fff !important;
+}
+
+.main-panel-wrapper .container-fluid {
+  padding-left: 1rem;
+  padding-right: 1rem;
+  max-width: none;
+}
+
+/* Ajuste de padding para contenido dinámico */
+.main-content-area {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding: 1rem;
+  box-sizing: border-box;
+  padding-top: 56px;
+  transition: padding-top 0.3s ease;
+}
+
+.main-content-area.expanded {
+  padding-top: 112px; /* 56px * 2 filas del navbar */
+}
+
+@media (max-width: 768px) {
+  .main-content-area {
+    padding: 0.5rem;
+    padding-top: 56px;
+  }
+
+  .main-content-area.expanded {
+    padding-top: 112px;
+  }
+}
+
+/* ===== ESTILOS PARA NAVEGACIÓN ===== */
+.navbar-brand {
+  font-size: 1rem;
+}
+
+.user-avatar {
+  flex-shrink: 0;
+}
+
+.nav-link {
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-radius: 0.375rem;
+  margin: 0 0.25rem;
+  padding: 0.5rem 1rem !important;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-link.active {
+  background-color: rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+}
+
+/* ===== ESTILOS PARA NAVBAR DINÁMICO - GALLERY ROW ===== */
+
+/* Fila adicional del navbar para galerías */
+#gallery-navbar-row {
+  position: relative;
+  height: 56px;
+  background: rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  color: white;
+  z-index: 1;
+}
+
+#gallery-navbar-row .form-control-sm {
+  border-radius: 6px;
+  border: 1px solid #ced4da;
+  background-color: white;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+#gallery-navbar-row .btn {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+#gallery-navbar-row .btn-outline-light {
+  color: white;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+#gallery-navbar-row .btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: white;
+}
+
+/* Input con icono simulado */
+#gallery-navbar-row .d-flex.align-items-center[position="relative"] {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+#gallery-navbar-row .htmx-indicator {
+  display: none;
+}
+
+.htmx-request [hx-indicator] .htmx-indicator {
+  display: inline;
+}
+
+/* ===== ESTILOS PARA AUTH MODAL ===== */
+#authModal {
+  z-index: 1050;
+}
+
+.input-lg {
+  min-width: 300px;
+}
+
+#authModal .modal-content {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+#authModal .modal-header {
+  border-radius: 15px 15px 0 0;
+  border-bottom: none;
+}
+
+#authModal .btn {
+  border-radius: 8px;
+  padding: 12px 20px;
+}
+
+#authModal .form-control {
+  border-radius: 8px;
+  padding: 12px 15px;
+  border: 2px solid #e9ecef;
+  transition: border-color 0.3s;
+}
+
+#authModal .form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+#authModal .btn-text {
+  display: inline;
+}
+
+#authModal .btn:disabled .btn-text {
+  display: none;
+}
+
+#authModal .btn:disabled .spinner-border {
+  display: inline-block !important;
+}
+
+.alert-auth {
+  border-radius: 8px;
+  border: none;
+  padding: 12px 15px;
+}
+
+/* ===== ESTILOS PARA DELETE ACCOUNT ===== */
+.alert-danger {
+  border-left: 4px solid #dc3545;
+}
+
+.alert-info {
+  border-left: 4px solid #0dcaf0;
+}
+
+.form-check-input:checked {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+/* Casilla de verificación personalizada */
+.custom-confirmation-box {
+  background: linear-gradient(135deg, #fff5f5 0%, #ffeaea 100%);
+  border: 2px solid #dc3545 !important;
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.1);
+  transition: all 0.3s ease;
+}
+
+.custom-confirmation-box:hover {
+  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.2);
+  transform: translateY(-2px);
+}
+
+.custom-checkbox {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #dc3545;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.custom-checkbox:checked {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.2);
+}
+
+.custom-checkbox:focus {
+  box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.3);
+  border-color: #dc3545;
+}
+
+.custom-checkbox:checked::before {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.custom-label {
+  cursor: pointer;
+  user-select: none;
+  margin-left: 12px;
+}
+
+.custom-label:hover {
+  color: #dc3545;
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+}
+
+.list-group-item {
+  background: transparent;
+}
+
+/* Estilos específicos para modales */
+#authModal .card,
+.delete-account-modal .card {
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+#authModal .card-header,
+.delete-account-modal .card-header {
+  border-radius: 0;
+}
+
+/* Animación para el checkbox */
+@keyframes checkboxPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.custom-checkbox:checked {
+  animation: checkboxPulse 0.3s ease;
+}
+
+/* Efecto hover en la caja de confirmación */
+.custom-confirmation-box:has(.custom-checkbox:checked) {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-color: #28a745 !important;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+}
+
+.custom-confirmation-box:has(.custom-checkbox:checked) .custom-label {
+  color: #155724;
+}
+
+/* Botón deshabilitado */
+.btn-danger:disabled {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-danger:disabled:hover {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Asegurar que los indicadores no interfieran */
+body.htmx-request .htmx-indicator,
+.htmx-indicator {
+  display: none !important;
+}

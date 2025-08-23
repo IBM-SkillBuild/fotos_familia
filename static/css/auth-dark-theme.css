@@ -1,0 +1,121 @@
+/* CSS para tema oscuro en autenticación - Forzar colores visibles */
+
+/* Modal principal */
+.modal-content {
+    background: #1a202c !important;
+    border: 1px solid #4a5568 !important;
+    color: #ffffff !important;
+}
+
+/* Header del modal */
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border-bottom: 1px solid #4a5568 !important;
+    color: #ffffff !important;
+}
+
+.modal-title {
+    color: #ffffff !important;
+}
+
+/* Body del modal */
+.modal-body {
+    background: #2d3748 !important;
+    color: #ffffff !important;
+}
+
+/* Todos los textos */
+.modal-body h1,
+.modal-body h2,
+.modal-body h3,
+.modal-body h4,
+.modal-body h5,
+.modal-body h6,
+.modal-body p,
+.modal-body span,
+.modal-body div,
+.modal-body small {
+    color: #ffffff !important;
+}
+
+/* Botones */
+.btn {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border: 2px solid #34d399 !important;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+    border: 2px solid #a78bfa !important;
+}
+
+/* Inputs */
+.form-control {
+    background: #1a202c !important;
+    border: 2px solid #4a5568 !important;
+    color: #ffffff !important;
+}
+
+.form-control:focus {
+    background: #1a202c !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25) !important;
+}
+
+.form-control::placeholder {
+    color: #a0aec0 !important;
+}
+
+/* Labels */
+.form-label {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+/* Badges y alertas */
+.badge {
+    background: #4a5568 !important;
+    color: #90cdf4 !important;
+    border: 1px solid #4299e1 !important;
+}
+
+.alert {
+    background: #742a2a !important;
+    border: 1px solid #fc8181 !important;
+    color: #fed7d7 !important;
+}
+
+/* Iconos */
+.fas, .fa {
+    color: inherit !important;
+}
+
+/* Texto muted */
+.text-muted {
+    color: #a0aec0 !important;
+}
+
+/* Links */
+a {
+    color: #90cdf4 !important;
+}
+
+a:hover {
+    color: #bee3f8 !important;
+}
+
+/* Spinners */
+.spinner-border {
+    color: #10b981 !important;
+}
+
+/* Form text */
+.form-text {
+    color: #a0aec0 !important;
+}

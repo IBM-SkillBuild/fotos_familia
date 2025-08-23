@@ -1,0 +1,48 @@
+<!-- Modal para cambiar email -->
+<div class="modal-header bg-warning text-dark">
+  <h5 class="modal-title">🔑 Cambiar Email</h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body">
+  <div class="alert alert-info">
+    <strong>📧 Email actual:</strong> {{ user.email }}
+  </div>
+  
+  <p class="mb-3">
+    <strong>⚠️ Importante:</strong> Te enviaremos un código de verificación al <strong>nuevo email</strong>. 
+    Asegúrate de tener acceso a la nueva dirección antes de continuar.
+  </p>
+  
+  <form hx-post="/api/profile/change-email" 
+        hx-target="#email-change-alerts" 
+        hx-swap="innerHTML"
+        hx-indicator="#email-loading">
+    
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <div class="mb-3">
+      <label for="newEmail" class="form-label">Nuevo Email</label>
+      <input type="email" class="form-control input-lg" id="newEmail" name="new_email" 
+             placeholder="nuevo@email.com" required>
+    </div>
+    
+    <div class="mb-3">
+      <label for="confirmEmail" class="form-label">Confirmar Nuevo Email</label>
+      <input type="email" class="form-control input-lg" id="confirmEmail" name="confirm_email" 
+             placeholder="nuevo@email.com" required>
+    </div>
+    
+    <!-- Alertas del cambio de email -->
+    <div id="email-change-alerts" class="mb-3"></div>
+    
+    <div class="d-grid gap-2">
+      <button type="submit" class="btn btn-warning">
+        <span class="btn-text">📤 Enviar Código de Verificación</span>
+        <span id="email-loading" class="spinner-border spinner-border-sm d-none" role="status"></span>
+      </button>
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        Cancelar
+      </button>
+    </div>
+  </form>
+</div>

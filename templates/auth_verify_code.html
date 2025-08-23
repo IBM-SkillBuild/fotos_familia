@@ -1,0 +1,242 @@
+{% set is_register = flow_type == 'register' %}
+{% if is_register %}
+  {% set theme_color = '#8b5cf6' %}
+  {% set theme_border = '#a78bfa' %}
+  {% set header_gradient = 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%)' %}
+  {% set title_text = 'Código de Registro' %}
+  {% set icon = 'fas fa-user-plus' %}
+{% else %}
+  {% set theme_color = '#10b981' %}
+  {% set theme_border = '#34d399' %}
+  {% set header_gradient = 'linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%)' %}
+  {% set title_text = 'Código de Acceso' %}
+  {% set icon = 'fas fa-sign-in-alt' %}
+{% endif %}
+
+<div style="
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+">
+  <div style="
+    background: #1a202c;
+    border: 1px solid #4a5568;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+    color: #ffffff;
+  ">
+    
+    <!-- Header -->
+    <div style="
+      background: {{ header_gradient }};
+      border-radius: 16px 16px 0 0;
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 1px solid #4a5568;
+    ">
+      <div style="font-size: 2rem; margin-bottom: 0.25rem;">
+        <i class="{{ icon }}" style="color: #ffffff;"></i>
+      </div>
+      <h4 style="color: #ffffff; font-weight: 700; font-size: 1.1rem; margin: 0;">
+        {{ title_text }}
+      </h4>
+    </div>
+
+    <!-- Body -->
+    <div style="
+      background: #2d3748;
+      padding: 1rem;
+      border-radius: 0 0 16px 16px;
+    ">
+      
+      <!-- Email info compacto -->
+      <div style="text-align: center; margin-bottom: 1rem;">
+        <p style="color: #cbd5e0; margin: 0 0 0.25rem 0; font-size: 0.8rem;">
+          Código enviado a:
+        </p>
+        <strong style="color: {{ theme_color }}; font-size: 0.85rem; word-break: break-all;">{{ email }}</strong>
+      </div>
+
+      <!-- Error -->
+      {% if error %}
+      <div style="
+        background: linear-gradient(135deg, #742a2a 0%, #9b2c2c 100%);
+        border: 2px solid #fc8181;
+        border-radius: 12px;
+        color: #fed7d7;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.25);
+        text-align: center;
+      ">
+        <div style="display: flex; align-items: center; justify-content: center;">
+          <i class="fas fa-exclamation-triangle" style="font-size: 1.2rem; color: #fed7d7; margin-right: 1rem;"></i>
+          <div>
+            <strong style="color: #fed7d7;">Error de verificación</strong>
+            <div style="font-size: 0.9rem; margin-top: 0.25rem; color: #fed7d7;">{{ error }}</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Form -->
+      <form
+        hx-post="/api/auth/htmx-verify"
+        hx-target="#auth-container"
+        hx-swap="innerHTML"
+        hx-indicator="#verify-loading"
+      >
+        <input type="hidden" name="email" value="{{ email }}" />
+
+        <div style="margin-bottom: 1rem;">
+          <input
+            type="text"
+            name="code"
+            id="code"
+            style="
+              font-size: 1.6rem;
+              letter-spacing: 0.5rem;
+              padding: 0.75rem;
+              border-radius: 8px;
+              border: 2px solid #4a5568;
+              background: #1a202c;
+              text-align: center;
+              font-weight: 700;
+              color: #ffffff;
+              font-family: 'Courier New', monospace;
+              width: 100%;
+              box-sizing: border-box;
+            "
+            maxlength="6"
+            placeholder="000000"
+            required
+            autocomplete="off"
+            inputmode="numeric"
+            pattern="[0-9]{6}"
+            onfocus="this.style.borderColor='{{ theme_color }}'; this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.25)'"
+            onblur="this.style.borderColor='#4a5568'; this.style.boxShadow='none'"
+          />
+          <div style="color: #a0aec0; margin-top: 0.25rem; font-size: 0.75rem; text-align: center;">
+            Código de 6 dígitos • Expira en 10 min
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <button type="submit" id="verify-btn" style="
+            background: linear-gradient(135deg, {{ theme_color }} 0%, {{ theme_color }} 100%);
+            border: 2px solid {{ theme_border }};
+            color: #ffffff;
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.9rem;
+          "
+          onmouseover="this.style.transform='translateY(-2px)'"
+          onmouseout="this.style.transform='translateY(0)'">
+            <i class="fas fa-check" style="color: #ffffff; margin-right: 0.5rem;"></i>
+            Verificar Código
+          </button>
+
+          <button
+            type="button"
+            style="
+              background: none;
+              border: 1px solid #718096;
+              color: #cbd5e0;
+              font-weight: 500;
+              padding: 0.5rem 1rem;
+              border-radius: 6px;
+              transition: all 0.3s ease;
+              cursor: pointer;
+              width: 100%;
+              font-size: 0.85rem;
+            "
+            hx-get="/auth-modal"
+            hx-target="#auth-container"
+            hx-swap="innerHTML"
+            onmouseover="this.style.background='#4a5568'; this.style.color='#f7fafc'"
+            onmouseout="this.style.background='none'; this.style.color='#cbd5e0'"
+          >
+            <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i>
+            Volver atrás
+          </button>
+        </div>
+      </form>
+
+      <!-- Loading -->
+      <div id="verify-loading" style="
+        display: none;
+        background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+        border: 1px solid {{ theme_border }};
+        border-radius: 8px;
+        padding: 0.75rem;
+        text-align: center;
+        margin-top: 0.5rem;
+      ">
+        <div style="
+          border: 2px solid #4a5568;
+          border-top: 2px solid {{ theme_color }};
+          border-radius: 50%;
+          width: 1.5rem;
+          height: 1.5rem;
+          animation: spin 1s linear infinite;
+          margin: 0 auto 0.5rem auto;
+        "></div>
+        <p style="color: {{ theme_color }}; font-weight: 500; margin: 0; font-size: 0.8rem;">
+          Verificando...
+        </p>
+      </div>
+      
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.htmx-indicator {
+  display: block !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const codeInput = document.getElementById("code");
+  
+  codeInput.focus();
+
+  codeInput.addEventListener("input", function (e) {
+    e.target.value = e.target.value.replace(/[^0-9]/g, "");
+    
+    if (e.target.value.length === 6) {
+      setTimeout(() => {
+        document.getElementById("verify-btn").click();
+      }, 500);
+    }
+  });
+
+  codeInput.addEventListener("keypress", function (e) {
+    if (e.key === "Enter" && e.target.value.length === 6) {
+      e.preventDefault();
+      document.getElementById("verify-btn").click();
+    }
+  });
+});
+</script>

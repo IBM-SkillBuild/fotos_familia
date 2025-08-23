@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Panel Principal - {{ user.name }}{% endblock %}
+
+{% block content %}
+<!-- Romper el container de base.html para navbar 100% -->
+</div> <!-- Cerrar el container de base.html -->
+
+
+
+<div class="main-panel-wrapper">
+<!-- Desktop Navigation - 100% WIDTH -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary d-none d-lg-block">
+  <div class="container-fluid">
+      <div class="navbar-brand d-flex align-items-center">
+        <div class="user-avatar bg-white text-primary rounded-circle d-inline-flex align-items-center justify-content-center me-3" 
+             style="width: 40px; height: 40px; font-size: 18px; font-weight: bold;">
+          {{ user.name[0].upper() }}
+        </div>
+        <div>
+          <div class="fw-bold">{{ user.name }}</div>
+          <small class="opacity-75">{{ user.email }}</small>
+        </div>
+      </div>
+      
+      <div class="navbar-nav ms-auto">
+        <a class="nav-link active" 
+           hx-get="/dashboard" 
+           hx-target="#main-content" 
+           hx-swap="innerHTML">
+          <i class="fas fa-tachometer-alt me-2"></i>
+          Dashboard
+        </a>
+        
+        <a class="nav-link text-light" 
+           hx-post="/api/logout" 
+           hx-confirm="¿Estás seguro de que quieres cerrar sesión?">
+          <i class="fas fa-sign-out-alt me-2"></i>
+          Cerrar Sesión
+        </a>
+      </div>
+    </div>
+  </nav>
+  <script>
+    alert("{{ user.name }}");
+  </script>
+
+<!-- Mobile Navigation - 100% WIDTH -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary d-lg-none">
+  <div class="container-fluid">
+      <div class="navbar-brand d-flex align-items-center">
+        <div class="user-avatar bg-white text-primary rounded-circle d-inline-flex align-items-center justify-content-center me-2" 
+             style="width: 35px; height: 35px; font-size: 16px; font-weight: bold;">
+          {{ user.name[0].upper() }}
+        </div>
+        <div>
+          <div class="fw-bold">{{ user.name }}</div>
+          <small class="opacity-75">{{ user.email }}</small>
+        </div>
+      </div>
+      
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      
+      <div class="collapse navbar-collapse" id="mobileNav">
+        <div class="navbar-nav ms-auto mt-3">
+          <a class="nav-link active" 
+             hx-get="/dashboard" 
+             hx-target="#main-content" 
+             hx-swap="innerHTML"
+             data-bs-toggle="collapse" 
+             data-bs-target="#mobileNav">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Dashboard
+          </a>
+          
+          <hr class="text-light my-2">
+          
+          <a class="nav-link text-light" 
+             hx-post="/api/logout" 
+             hx-confirm="¿Estás seguro de que quieres cerrar sesión?">
+            <i class="fas fa-sign-out-alt me-2"></i>
+            Cerrar Sesión
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+</div> <!-- Cerrar main-panel-wrapper -->
+
+<!-- Main Content Area - COMPLETAMENTE VACÍO - ANCHO 100% -->
+<div class="main-content-area py-4">
+  <!-- Loading indicator -->
+  <div id="loading" class="htmx-indicator text-center py-4">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+  </div>
+  
+  <!-- Content area - VACÍO, se llena por HTMX - ANCHO 100% -->
+  <div id="main-content" class="w-100">
+    <!-- El contenido se carga aquí por HTMX cuando haces clic en Dashboard -->
+  </div>
+</div>
+</div>
+
+
+</div> <!-- Cerrar main-panel-wrapper -->
+
+<div class="container"> <!-- Reabrir container para base.html -->
+{% endblock %}

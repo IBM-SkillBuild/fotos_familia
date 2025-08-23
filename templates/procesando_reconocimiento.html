@@ -1,0 +1,95 @@
+<!-- Procesando Reconocimiento Facial -->
+<div class="container-fluid d-flex align-items-center justify-content-center" style="min-height: 70vh;">
+  <div class="text-center">
+    <!-- Spinner elegante -->
+    <div class="mb-4">
+      <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+    
+    <!-- Título principal -->
+    <h2 class="text-white mb-3">
+      <i class="fas fa-brain text-primary me-2"></i>
+      Trabajando en Reconocimiento Facial
+    </h2>
+    
+    <!-- Descripción -->
+    <p class="text-muted mb-4">
+      Analizando las fotos recién subidas para detectar personas conocidas...<br>
+      <small>Procesamiento optimizado con múltiples hilos paralelos</small>
+    </p>
+    
+    <!-- Barra de progreso estimada -->
+    <div class="progress mb-3" style="height: 8px;">
+      <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+           role="progressbar" style="width: 0%" id="progress-bar">
+      </div>
+    </div>
+    <small class="text-muted">Tiempo estimado: 10-30 segundos por foto</small>
+    
+    <!-- Indicadores de progreso -->
+    <div class="d-flex justify-content-center align-items-center gap-3 mb-4">
+      <div class="d-flex align-items-center">
+        <i class="fas fa-search text-info me-2"></i>
+        <small class="text-muted">Detectando caras</small>
+      </div>
+      <div class="d-flex align-items-center">
+        <i class="fas fa-users text-warning me-2"></i>
+        <small class="text-muted">Comparando personas</small>
+      </div>
+      <div class="d-flex align-items-center">
+        <i class="fas fa-tag text-success me-2"></i>
+        <small class="text-muted">Etiquetando fotos</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Auto-cargar el procesamiento con los IDs de las fotos -->
+<div hx-get="/api/procesar-reconocimiento-facial{{ '?ids=' + request.args.get('ids', '') if request.args.get('ids') else '' }}" 
+     hx-target="#panel-content" 
+     hx-swap="innerHTML"
+     hx-trigger="load delay:2s">
+</div>
+
+<script>
+// Simular progreso mientras se procesa
+let progress = 0;
+const progressBar = document.getElementById('progress-bar');
+if (progressBar) {
+  const interval = setInterval(() => {
+    progress += Math.random() * 15;
+    if (progress > 90) progress = 90; // No llegar al 100% hasta que termine
+    progressBar.style.width = progress + '%';
+  }, 1000);
+
+  // Limpiar intervalo cuando se complete la carga
+  document.addEventListener('htmx:afterRequest', () => {
+    clearInterval(interval);
+    if (progressBar) progressBar.style.width = '100%';
+  });
+}
+</script>
+
+<style>
+/* Animación del spinner */
+.spinner-border {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Animación de los iconos */
+.fas {
+  animation: pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+</style>

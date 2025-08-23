@@ -1,0 +1,313 @@
+    <link
+      href="{{ url_for('static', filename='css/dark-theme-fixes.css') }}"
+      rel="stylesheet"
+    />
+<style>
+  .fixed-top-controls {
+    position: fixed;
+    top: 56px; /* Altura inicial del navbar, ajustada dinámicamente en JS */
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.8) !important; /* Fondo oscuro semi-transparente */
+    backdrop-filter: blur(10px) !important;
+    padding: 0.5rem 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    display: flex; /* Asegurar flex para disposición interna */
+  }
+  .navbar.navbar-expand-lg.navbar-dark.bg-dark.fixed-top {
+    background-color: #212529 !important; /* Fondo opaco del navbar */
+    display: block; /* Valor por defecto de Bootstrap */
+  }
+
+    .gallery-header {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 0.5rem !important;
+    }
+    .gallery-header .left-section,
+    .gallery-header .right-section {
+      width: 100%;
+      justify-content: flex-start;
+    }
+    .gallery-header .right-section {
+      justify-content: space-between;
+    }
+    .gallery-header h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .gallery-header select.form-select {
+      width: 100%;
+      max-width: none;
+    }
+    .gallery-header p.text-muted {
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+    .gallery-header .btn {
+      width: auto;
+    }
+    .fixed-top-controls {
+      flex-direction: column !important;
+      align-items: stretch !important;
+    }
+    .fixed-top-controls .d-flex.align-items-center {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+      gap: 0.5rem;
+    }
+    .fixed-top-controls input.form-control {
+      width: 100% !important;
+      margin-left: 0 !important;
+    }
+    .fixed-top-controls .btn {
+      width: 100%;
+      font-size: 0.9rem;
+    }
+    .fixed-top-controls .d-flex.gap-2 {
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-right: 0 !important;
+    }
+  }
+</style>
+
+<!-- Galería de Todas las Fotos -->
+<div id="panel-content" class="container-fluid" style="padding: 2rem">
+  <!-- Header con controles -->
+  <div class="mb-4">
+    <!-- Primera fila: Título, dropdown, contador y botón volver -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-3 gallery-header">
+      <div class="d-flex align-items-center gap-2 left-section">
+        <h2 class="mb-1 text-white">
+          <i class="fas fa-images text-primary me-2"></i>
+          Todas las Fotos
+        </h2>
+        <select name="buscar_persona" class="form-select form-select-sm" style="width: 200px; min-width: 150px;"
+                hx-get="{% if is_my_photos %}/api/buscar-mis-fotos-persona{% else %}/api/buscar-fotos-persona{% endif %}"
+                hx-trigger="change"
+                hx-target="#panel-content"
+                hx-swap="innerHTML"
+                hx-indicator="#search-spinner">
+          <option value="">Categorías</option>
+          <option value="familia">familia completa o varios</option>
+          <option value="hermanos">hermanos</option>
+          <option value="boda">bodas</option>
+          <option value="antigua">antigua</option>
+          <option value="vacaciones">vacaciones</option>
+          <option value="fake">fake</option>
+          <option value="amigos">amigos</option>
+          <option value="retrato">retratos-selfie</option>
+          <option value="cumpleaños">cumpleaños</option>
+        </select>
+        <div id="search-spinner" class="htmx-indicator ms-2" style="display: none;">
+          <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+        </div>
+      </div>
+      <div class="d-flex align-items-center right-section">
+        <p class="text-muted mb-0 me-3" style="color:white">
+          {% if fotos %}
+          <span id="totalPhotos" style="color:white">{{ fotos|length }} foto{{ 's' if fotos|length != 1 else '' }} en total</span>
+          <span id="selectedCount" class="ms-2 text-primary fw-bold" style="display: none;color:white">
+            (<span id="selectedNumber" style="color:white">0</span> seleccionada{{ 's' if fotos|length != 1 else '' }})
+          </span>
+          {% else %} No hay fotos disponibles {% endif %}
+        </p>
+        <button class="btn btn-outline-secondary" hx-get="/selector_fotos" hx-target="#panel-content" hx-swap="innerHTML" style="cursor: pointer">
+          <i class="fas fa-arrow-left me-2"></i>Volver
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {% if fotos %}
+  <!-- Grid de fotos -->
+  <div id="fotos-grid" class="row g-3">
+    {% for foto in fotos %}
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2" id="photo-card-{{ foto.id }}"
+      data-photo-id="{{ foto.id }}"
+      data-personas="{{ (foto.personas_nombres | join(', ')) if foto.personas_nombres else '' }}"
+      data-foto-nombre="{{ foto.nombre }}">
+      <div class="card h-100 shadow-sm" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2);">
+        <!-- Imagen -->
+        <div class="position-relative" style="height: 200px; overflow: hidden">
+          <img src="{{ foto.nombre_archivo }}" alt="{{ foto.nombre }}" class="card-img-top w-100 h-100"
+            style="object-fit: cover; cursor: pointer"
+            onclick="openPhotoModal('{{ foto.nombre_archivo }}', '{{ foto.nombre }}', '{{ foto.usuario_nombre }}', '{{ foto.mes }}/{{ foto.año }}', 'photo-card-{{ foto.id }}')"
+            loading="lazy" />
+          <!-- Badge con fecha y checkbox -->
+          <div class="position-absolute top-0 end-0 m-2 d-flex align-items-center gap-1">
+            <span class="badge bg-dark bg-opacity-75">{{ foto.mes }}/{{ foto.año }}</span>
+            <input type="checkbox" class="form-check-input" data-photo-id="{{ foto.id }}"
+              data-photo-user="{{ foto.usuario_nombre }}" data-current-user="{{ user.name }}"
+              style="cursor: pointer; transform: scale(1.1); margin: 0; vertical-align: middle; margin-left: 32px;" />
+          </div>
+        </div>
+        <!-- Info de la foto -->
+        <div class="card-body p-2">
+          <h6 class="card-title mb-1 text-truncate" title="{{ foto.nombre }}">{{ foto.nombre }}</h6>
+          <small class="text-muted"><i class="fas fa-user me-1"></i>{{ foto.usuario_nombre }}</small>
+          <button class="btn btn-outline-secondary btn-sm w-100" 
+                  hx-get="/editar_nombre?id={{ foto.id }}" 
+                  hx-target="#panel-content" 
+                  hx-swap="innerHTML">
+            <i class="fas fa-tag me-1"></i>Editar Nombre
+          </button>
+          <!-- Botón etiquetar si no tiene personas -->
+          {% if foto.necesita_etiquetado %}
+          <div class="mt-2">
+            <button class="btn btn-warning btn-sm w-100" onclick="etiquetarFoto({{ foto.id }})">
+              <i class="fas fa-tag me-1"></i>Etiquetar
+            </button>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <!-- Estado vacío -->
+  <div class="text-center py-5">
+    <i class="fas fa-images fa-4x text-muted mb-3"></i>
+    <h4 class="text-muted">No hay fotos disponibles</h4>
+    <p class="text-muted mb-4">Sé el primero en subir una foto a la galería</p>
+    <button class="btn btn-success" hx-get="/subir_foto" hx-target="#panel-content" hx-swap="innerHTML">
+      <i class="fas fa-plus me-2"></i>Subir Primera Foto
+    </button>
+  </div>
+  {% endif %}
+
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Función para forzar el colapso del menú hamburguesa
+  function collapseMobileNav() {
+    const mobileNav = document.getElementById('mobileNav');
+    if (mobileNav && mobileNav.classList.contains('show')) {
+      console.log('Colapsando mobileNav');
+      const collapseInstance = bootstrap.Collapse.getInstance(mobileNav) || new bootstrap.Collapse(mobileNav, { toggle: false });
+      collapseInstance.hide();
+    } else {
+      console.log('mobileNav no encontrado o no visible:', mobileNav);
+    }
+  }
+
+  // Cerrar el menú al iniciar cualquier solicitud HTMX
+  document.addEventListener("htmx:beforeRequest", function (event) {
+    console.log('htmx:beforeRequest disparado', event.detail.elt);
+    collapseMobileNav();
+  });
+
+  // Añadir listener de click a los links del menú móvil para cerrar al click
+  document.addEventListener('DOMContentLoaded', function () {
+    const mobileNavLinks = document.querySelectorAll('#mobileNav .nav-link');
+    mobileNavLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        console.log('Clic en nav-link:', link.textContent);
+        collapseMobileNav();
+      });
+    });
+  });
+
+  // Re-inicializar Bootstrap collapse después de HTMX settle
+  document.addEventListener("htmx:afterSettle", function (event) {
+    console.log('htmx:afterSettle disparado');
+    const collapses = document.querySelectorAll('[data-bs-toggle="collapse"]');
+    collapses.forEach((el) => {
+      if (!bootstrap.Collapse.getInstance(el)) {
+        console.log('Reinicializando collapse para:', el);
+        new bootstrap.Collapse(el, { toggle: false });
+      }
+    });
+  });
+
+  // Re-inicializar en onLoad para contenido nuevo
+  htmx.onLoad(function (content) {
+    console.log('htmx:onLoad disparado');
+    const collapses = content.querySelectorAll('[data-bs-toggle="collapse"]');
+    collapses.forEach((el) => {
+      if (!bootstrap.Collapse.getInstance(el)) {
+        console.log('Reinicializando collapse en onLoad para:', el);
+        new bootstrap.Collapse(el, { toggle: false });
+      }
+    });
+  });
+
+  // Las funciones del modal ahora están en index.html como funciones globales
+
+  // Placeholder functions for buttons
+  function filterByDate() {
+    console.log("Filtrar por fecha");
+  }
+  function filterByPerson() {
+    console.log("Filtrar por persona");
+  }
+  function deleteSelected() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"][data-photo-id]:checked');
+    if (checkboxes.length === 0) {
+      alert('Selecciona al menos una foto para eliminar');
+      return;
+    }
+
+    const selectedIds = Array.from(checkboxes).map(cb => cb.dataset.photoId);
+    const currentUser = checkboxes[0].dataset.currentUser;
+    
+    // Separar fotos propias de ajenas
+    const propias = [];
+    const ajenas = [];
+    
+    checkboxes.forEach(cb => {
+      const photoUser = cb.dataset.photoUser;
+      const photoId = cb.dataset.photoId;
+      
+      if (photoUser === currentUser) {
+        propias.push(photoId);
+      } else {
+        ajenas.push(photoId);
+      }
+    });
+
+    if (ajenas.length > 0 && propias.length === 0) {
+      alert('No puedes borrar fotos de otros usuarios.');
+      return;
+    }
+
+    const msg = ajenas.length > 0
+      ? `Se borrarán ${propias.length} foto${propias.length !== 1 ? 's' : ''} propias. Las de otros no se pueden borrar.`
+      : `¿Borrar ${propias.length} foto${propias.length !== 1 ? 's' : ''}?`;
+
+    if (confirm(msg)) {
+      borrarFotosGaleria(propias);
+    }
+  }
+
+  async function borrarFotosGaleria(ids) {
+    try {
+      const res = await fetch('/api/borrar-fotos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ foto_ids: ids })
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        alert(`${data.deleted_count} foto${data.deleted_count !== 1 ? 's' : ''} eliminada${data.deleted_count !== 1 ? 's' : ''} correctamente`);
+        // Recargar la galería actual
+        htmx.ajax('GET', '/ver-todas-fotos', { target: '#panel-content', swap: 'innerHTML' });
+      } else {
+        alert(data.message || 'Error al eliminar las fotos');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al eliminar las fotos');
+    }
+  }
+  function etiquetarFoto(id) {
+    console.log(`Etiquetar foto con ID: ${id}`);
+  }
+</script>

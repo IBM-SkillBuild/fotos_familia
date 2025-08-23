@@ -1,0 +1,374 @@
+<div
+  style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  "
+>
+  <div
+    style="
+      background: #1a202c;
+      border: 1px solid #4a5568;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 450px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+      color: #ffffff;
+    "
+  >
+    <!-- Header -->
+    <div
+      style="
+        background: linear-gradient(
+          135deg,
+          #8b5cf6 0%,
+          #7c3aed 50%,
+          #6d28d9 100%
+        );
+        border-radius: 16px 16px 0 0;
+        padding: 1.5rem;
+        text-align: center;
+        border-bottom: 1px solid #4a5568;
+      "
+    >
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem">
+        <i class="fas fa-user-plus" style="color: #ffffff"></i>
+      </div>
+      <h4
+        style="
+          color: #ffffff;
+          font-weight: 700;
+          font-size: 1.3rem;
+          margin: 0 0 0.25rem 0;
+        "
+      >
+        Crear Cuenta Nueva
+      </h4>
+      <p style="color: #ffffff; opacity: 0.95; font-size: 0.9rem; margin: 0">
+        Únete a la galería familiar
+      </p>
+    </div>
+
+    <!-- Body -->
+    <div
+      style="background: #2d3748; padding: 1.5rem; border-radius: 0 0 16px 16px"
+    >
+      <!-- Instrucciones -->
+      <div style="text-align: center; margin-bottom: 1.5rem">
+        <div
+          style="
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            border: 2px solid #a78bfa;
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+          "
+        >
+          <i
+            class="fas fa-user-check"
+            style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #8b5cf6"
+          ></i>
+          <h6
+            style="
+              color: #ffffff;
+              margin-bottom: 0.25rem;
+              font-weight: 600;
+              font-size: 0.9rem;
+            "
+          >
+            Registro rápido y seguro
+          </h6>
+          <p style="color: #cbd5e0; margin: 0; font-size: 0.8rem">
+            Solo necesitas tu nombre y email
+          </p>
+        </div>
+      </div>
+
+      <!-- Error -->
+      {% if error %}
+      <div
+        style="
+          background: linear-gradient(135deg, #742a2a 0%, #9b2c2c 100%);
+          border: 2px solid #fc8181;
+          border-radius: 12px;
+          color: #fed7d7;
+          padding: 1.25rem 1.5rem;
+          margin-bottom: 1.5rem;
+          box-shadow: 0 4px 15px rgba(220, 53, 69, 0.25);
+        "
+      >
+        <div style="display: flex; align-items: center">
+          <i
+            class="fas fa-exclamation-triangle"
+            style="font-size: 1.2rem; color: #fed7d7; margin-right: 1rem"
+          ></i>
+          <div>
+            <strong style="color: #fed7d7">Error</strong>
+            <div style="font-size: 0.9rem; margin-top: 0.25rem; color: #fed7d7">
+              {{ error }}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Form -->
+      <form
+        hx-post="/api/auth/htmx-register"
+        hx-target="#auth-container"
+        hx-swap="innerHTML"
+        hx-indicator="#register-loading"
+      >
+        <!-- Nombre -->
+        <div style="margin-bottom: 1rem">
+          <label
+            for="name"
+            style="
+              color: #ffffff;
+              font-weight: 600;
+              margin-bottom: 0.5rem;
+              font-size: 0.9rem;
+              display: block;
+            "
+          >
+            <i
+              class="fas fa-user"
+              style="color: #8b5cf6; margin-right: 0.5rem"
+            ></i>
+            Nombre Completo
+          </label>
+          <input
+            type="text"
+            name="name"
+            id="name"
+            style="
+              font-size: 1rem;
+              padding: 0.75rem 1rem;
+              border-radius: 8px;
+              border: 2px solid #4a5568;
+              background: #1a202c;
+              color: #ffffff;
+              width: 100%;
+              box-sizing: border-box;
+              font-weight: 500;
+            "
+            placeholder="Tu nombre completo"
+            required
+            autofocus
+            autocomplete="name"
+            onfocus="this.style.borderColor='#8b5cf6'; this.style.boxShadow='0 0 0 4px rgba(139, 92, 246, 0.25)'"
+            onblur="this.style.borderColor='#4a5568'; this.style.boxShadow='none'"
+          />
+        </div>
+
+        <!-- Email -->
+        <div style="margin-bottom: 1rem">
+          <label
+            for="email"
+            style="
+              color: #ffffff;
+              font-weight: 600;
+              margin-bottom: 0.5rem;
+              font-size: 0.9rem;
+              display: block;
+            "
+          >
+            <i
+              class="fas fa-envelope"
+              style="color: #8b5cf6; margin-right: 0.5rem"
+            ></i>
+            Dirección de Email
+          </label>
+          <input
+            type="email"
+            name="email"
+            id="email"
+            style="
+              font-size: 1rem;
+              padding: 0.75rem 1rem;
+              border-radius: 8px;
+              border: 2px solid #4a5568;
+              background: #1a202c;
+              color: #ffffff;
+              width: 100%;
+              box-sizing: border-box;
+              font-weight: 500;
+            "
+            placeholder="tu@email.com"
+            required
+            autocomplete="email"
+            onfocus="this.style.borderColor='#8b5cf6'; this.style.boxShadow='0 0 0 4px rgba(139, 92, 246, 0.25)'"
+            onblur="this.style.borderColor='#4a5568'; this.style.boxShadow='none'"
+          />
+          <div style="color: #a0aec0; margin-top: 0.5rem; font-size: 0.8rem">
+            <i
+              class="fas fa-info-circle"
+              style="color: #a0aec0; margin-right: 0.25rem"
+            ></i>
+            Te enviaremos un código de verificación
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div style="display: flex; flex-direction: column; gap: 1rem">
+          <button
+            type="submit"
+            style="
+              background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+              border: 2px solid #a78bfa;
+              color: #ffffff;
+              font-weight: 600;
+              padding: 0.875rem 1.5rem;
+              border-radius: 8px;
+              box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+              transition: all 0.3s ease;
+              cursor: pointer;
+              width: 100%;
+              font-size: 0.95rem;
+            "
+            onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 35px rgba(139, 92, 246, 0.6)'"
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(139, 92, 246, 0.4)'"
+          >
+            <i
+              class="fas fa-user-plus"
+              style="color: #ffffff; margin-right: 0.5rem"
+            ></i>
+            Crear Mi Cuenta
+          </button>
+
+          <button
+            type="button"
+            style="
+              background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+              border: 1px solid #718096;
+              color: #e2e8f0;
+              font-weight: 500;
+              padding: 0.625rem 1.5rem;
+              border-radius: 8px;
+              transition: all 0.3s ease;
+              cursor: pointer;
+              width: 100%;
+              font-size: 0.9rem;
+            "
+            hx-get="/auth-modal"
+            hx-target="#auth-container"
+            hx-swap="innerHTML"
+            onmouseover="this.style.transform='translateY(-2px)'; this.style.color='#f7fafc'"
+            onmouseout="this.style.transform='translateY(0)'; this.style.color='#e2e8f0'"
+          >
+            <i class="fas fa-arrow-left" style="margin-right: 0.5rem"></i>
+            Volver atrás
+          </button>
+        </div>
+      </form>
+
+      <!-- Loading -->
+      <div
+        id="register-loading"
+        style="
+          display: none;
+          background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+          border: 1px solid #a78bfa;
+          border-radius: 12px;
+          padding: 1.5rem;
+          text-align: center;
+          margin-top: 1rem;
+        "
+      >
+        <div
+          style="
+            border: 3px solid #4a5568;
+            border-top: 3px solid #8b5cf6;
+            border-radius: 50%;
+            width: 2rem;
+            height: 2rem;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem auto;
+          "
+        ></div>
+        <p style="color: #8b5cf6; font-weight: 500; margin: 0">
+          Creando tu cuenta...
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .htmx-indicator {
+    display: block !important;
+  }
+
+  input::placeholder {
+    color: #a0aec0 !important;
+    opacity: 0.7;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const nameInput = document.getElementById("name");
+    const emailInput = document.getElementById("email");
+
+    nameInput.focus();
+
+    // Validación de email en tiempo real
+    emailInput.addEventListener('input', function(e) {
+      const email = e.target.value;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (email && !emailRegex.test(email)) {
+        e.target.style.borderColor = '#fc8181';
+        e.target.style.boxShadow = '0 0 0 4px rgba(252, 129, 129, 0.25)';
+      } else if (email) {
+        e.target.style.borderColor = '#8b5cf6';
+        e.target.style.boxShadow = '0 0 0 4px rgba(139, 92, 246, 0.25)';
+      } else {
+        e.target.style.borderColor = '#4a5568';
+        e.target.style.boxShadow = 'none';
+      }
+    });
+
+    // Validación de nombre
+    nameInput.addEventListener('input', function(e) {
+      const name = e.target.value.trim();
+
+      if (name.length <script 2) {
+        e.target.style.borderColor = '#fc8181';
+        e.target.style.boxShadow = '0 0 0 4px rgba(252, 129, 129, 0.25)';
+      } else {
+        e.target.style.borderColor = '#8b5cf6';
+        e.target.style.boxShadow = '0 0 0 4px rgba(139, 92, 246, 0.25)';
+      }
+    });
+
+    // Enviar con Enter desde cualquier campo
+    [nameInput, emailInput].forEach(input => {
+      input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const form = e.target.closest('form');
+          if (form) {
+            form.dispatchEvent(new Event('submit'));
+          }
+        }
+      });
+    });
+  });
+</script>

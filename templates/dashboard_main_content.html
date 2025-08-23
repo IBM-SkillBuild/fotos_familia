@@ -1,0 +1,150 @@
+    <link
+      href="{{ url_for('static', filename='css/dark-theme-fixes.css') }}"
+      rel="stylesheet"
+    />
+<!-- Contenido principal del dashboard (sin navegador) -->
+<div class="container mt-4" >
+  <div class="row">
+    <div class="col-12">
+      <div
+        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+      >
+        <h1 class="h2">Dashboard</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary">
+              Compartir
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary">
+              Exportar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card user-info-card mb-4">
+        <div class="card-header dashboard-header">
+          <h5 class="mb-0 text-white">
+            <i class="fas fa-user-circle me-2"></i>
+            Información del Usuario
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Nombre:</strong> {{ user.name }}</p>
+              <p><strong>Email:</strong> {{ user.email }}</p>
+              {% if user.phone %}
+              <p><strong>Teléfono:</strong> {{ user.phone }}</p>
+              {% endif %}
+            </div>
+            <div class="col-md-6">
+              <p>
+                <strong>Cuenta creada:</strong> {{ user.created_at[:10] if
+                user.created_at else 'No disponible' }}
+              </p>
+              <p>
+                <strong>Última actualización:</strong> {{ user.updated_at[:10]
+                if user.updated_at else 'No disponible' }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+          <h6 class="mb-0">
+            <i class="fas fa-clock me-2"></i>
+            Estado de Sesión
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="status-badge rounded-pill px-3 py-1 me-3">
+              <small class="text-white fw-bold">ACTIVA</small>
+            </div>
+            <div>
+              <div class="fw-bold">Tiempo restante:</div>
+              {% include 'session_status.html' %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4 mb-4">
+      <div class="card feature-card h-100">
+        <div class="card-body text-center">
+          <div class="mb-3">
+            <i class="fas fa-user-edit fa-3x text-primary"></i>
+          </div>
+          <h5 class="card-title">Perfil</h5>
+          <p class="card-text">
+            Gestiona tu información personal y configuración de cuenta.
+          </p>
+          <button
+            class="btn btn-primary"
+            hx-get="/profile-content"
+            hx-target="#main-content"
+            hx-swap="innerHTML"
+          >
+            Ver Perfil
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+      <div class="card feature-card h-100">
+        <div class="card-body text-center">
+          <div class="mb-3">
+            <i class="fas fa-cog fa-3x text-secondary"></i>
+          </div>
+          <h5 class="card-title">Configuración</h5>
+          <p class="card-text">
+            Ajusta las preferencias y configuración de tu cuenta.
+          </p>
+          <button
+            class="btn btn-secondary"
+            hx-get="/settings-content"
+            hx-target="#main-content"
+            hx-swap="innerHTML"
+          >
+            Configurar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+      <div class="card feature-card h-100">
+        <div class="card-body text-center">
+          <div class="mb-3">
+            <i class="fas fa-chart-line fa-3x text-success"></i>
+          </div>
+          <h5 class="card-title">Actividad</h5>
+          <p class="card-text">
+            Revisa tu actividad reciente y estadísticas de uso.
+          </p>
+          <button
+            class="btn btn-success"
+            hx-get="/activity-content"
+            hx-target="#main-content"
+            hx-swap="innerHTML"
+          >
+            Ver Actividad
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

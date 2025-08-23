@@ -1,0 +1,28 @@
+<span
+  id="session-time-remaining"
+  hx-get="/api/session-status"
+  hx-trigger="every 10s"
+  hx-swap="outerHTML"
+  
+>
+  {% if session_info.minutes_remaining <= 0 %}
+  <span class="text-danger">Sesión expirada</span>
+  <script>
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 3000);
+  </script>
+  {% elif session_info.hours_remaining > 0 %}
+  <span
+    class="{% if session_info.minutes_remaining < 10 %}text-danger{% elif session_info.is_expiring_soon %}text-warning{% else %}text-success{% endif %}"
+  >
+    {{ session_info.hours_remaining }}h {{ session_info.mins_remaining }}min
+  </span>
+  {% else %}
+  <span
+    class="{% if session_info.minutes_remaining < 10 %}text-danger{% elif session_info.is_expiring_soon %}text-warning{% else %}text-success{% endif %}"
+  >
+    {{ session_info.mins_remaining }} minutos
+  </span>
+  {% endif %}
+</span>

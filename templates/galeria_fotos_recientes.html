@@ -1,0 +1,339 @@
+    <link
+      href="{{ url_for('static', filename='css/dark-theme-fixes.css') }}"
+      rel="stylesheet"
+    />
+<!-- Galería de Fotos Recién Subidas -->
+<div class="container-fluid" style="margin-top: 70px; padding: 2rem;">
+
+  <!-- Header con controles -->
+  <div class="mb-4">
+    <!-- Primera fila: Título, contador y botones -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h2 class="mb-1 text-white">
+          <i class="fas fa-check-circle text-success me-2"></i>
+          Fotos Subidas Exitosamente
+        </h2>
+        <p class="text-muted mb-0">
+          {% if fotos %}
+            <span id="totalPhotos">{{ fotos|length }}</span> foto{{ 's' if fotos|length != 1 else '' }} subida{{ 's' if fotos|length != 1 else '' }} correctamente
+          {% else %}
+            No hay fotos para mostrar
+          {% endif %}
+        </p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        {% if fotos %}
+        <button class="btn btn-warning"
+                onclick="procesarReconocimiento()"
+                style="cursor: pointer;">
+          <i class="fas fa-user-tag me-2"></i>Procesar Reconocimiento Facial
+        </button>
+        {% endif %}
+        <button class="btn btn-primary"
+                hx-get="/ver-todas-fotos"
+                hx-target="#panel-content"
+                hx-swap="innerHTML"
+                style="cursor: pointer;">
+          <i class="fas fa-images me-2"></i>Ver Todas las Fotos
+        </button>
+        <button class="btn btn-success"
+                hx-get="/subir_foto"
+                hx-target="#panel-content"
+                hx-swap="innerHTML"
+                style="cursor: pointer;">
+          <i class="fas fa-plus me-2"></i>Subir Más Fotos
+        </button>
+        <button class="btn btn-outline-secondary"
+                hx-get="/selector_fotos"
+                hx-target="#panel-content"
+                hx-swap="innerHTML"
+                style="cursor: pointer;">
+          <i class="fas fa-arrow-left me-2"></i>Volver
+        </button>
+      </div>
+    </div>
+    
+
+  </div>
+
+  {% if fotos %}
+    <!-- Mensaje de éxito -->
+    <div class="alert alert-success d-flex align-items-center mb-4">
+      <i class="fas fa-check-circle fa-2x me-3"></i>
+      <div>
+        <h5 class="alert-heading mb-1">¡Subida completada!</h5>
+        <p class="mb-0">Tus fotos se han subido correctamente y ya están disponibles en la galería.</p>
+      </div>
+    </div>
+
+    <!-- Grid de fotos -->
+    <div class="row g-3">
+      {% for foto in fotos %}
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2" 
+             id="foto-{{ loop.index }}"
+             data-photo-id="{{ foto.id }}"
+             data-personas="{{ foto.personas_nombres | join(', ') if foto.personas_nombres else '' }}"
+             data-foto-nombre="{{ foto.nombre }}">
+          <div class="card h-100 shadow-sm border-success visible-photo">
+            <!-- Imagen -->
+            <div class="position-relative" style="height: 200px; overflow: hidden;">
+              <img src="{{ foto.nombre_archivo }}" 
+                   alt="{{ foto.nombre }}"
+                   class="card-img-top w-100 h-100"
+                   style="object-fit: cover; cursor: pointer;"
+                   onclick="openPhotoModal('{{ foto.nombre_archivo }}', '{{ foto.nombre }}', '{{ foto.usuario_nombre }}', '{{ foto.mes }}/{{ foto.año }}', 'foto-{{ loop.index }}')"
+                   loading="lazy">
+              
+              <!-- Badge de "Nueva" -->
+              <div class="position-absolute top-0 start-0 m-2">
+                <span class="badge bg-success">
+                  <i class="fas fa-star me-1"></i>Nueva
+                </span>
+              </div>
+              
+              <!-- Badge con fecha -->
+              <div class="position-absolute top-0 end-0 m-2">
+                <span class="badge bg-dark bg-opacity-75">
+                  {{ foto.mes }}/{{ foto.año }}
+                </span>
+              </div>
+            </div>
+            
+            <!-- Info de la foto -->
+            <div class="card-body p-2">
+              <h6 class="card-title mb-1 text-truncate" title="{{ foto.nombre }}">
+                {{ foto.nombre }}
+              </h6>
+              <small class="text-muted">
+                <i class="fas fa-user me-1"></i>{{ foto.usuario_nombre }}
+              </small>
+              
+              <!-- Botón etiquetar si no tiene personas -->
+              {% if foto.necesita_etiquetado %}
+                <div class="mt-2">
+                  <button class="btn btn-warning btn-sm w-100" 
+                          onclick="etiquetarFoto({{ foto.id }})">
+                    <i class="fas fa-tag me-1"></i>Etiquetar
+                  </button>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Acciones rápidas -->
+    <div class="mt-4 text-center">
+      <div class="btn-group" role="group">
+        <button class="btn btn-outline-primary"
+                hx-get="/ver-todas-fotos"
+                hx-target="#panel-content"
+                hx-swap="innerHTML">
+          <i class="fas fa-images me-1"></i>Ver Galería Completa
+        </button>
+        <button class="btn btn-outline-success"
+                hx-get="/subir_foto"
+                hx-target="#panel-content"
+                hx-swap="innerHTML">
+          <i class="fas fa-plus me-1"></i>Subir Más Fotos
+        </button>
+      </div>
+    </div>
+
+  {% else %}
+    <!-- Estado vacío -->
+    <div class="text-center py-5">
+      <i class="fas fa-exclamation-triangle fa-4x text-warning mb-3"></i>
+      <h4 class="text-muted">No se encontraron fotos</h4>
+      <p class="text-muted mb-4">No hay fotos recientes para mostrar</p>
+      <button class="btn btn-primary"
+              hx-get="/subir_foto"
+              hx-target="#panel-content"
+              hx-swap="innerHTML">
+        <i class="fas fa-plus me-2"></i>Subir Fotos
+      </button>
+    </div>
+  {% endif %}
+</div>
+
+
+
+
+
+<script>
+// Funciones del modal de fotos
+let allPersons = [];
+let currentFilter = '';
+
+// Cargar personas al inicializar
+document.addEventListener('DOMContentLoaded', function() {
+  cargarPersonas();
+});
+
+async function cargarPersonas() {
+  try {
+    const response = await fetch('/api/get-all-persons');
+    const result = await response.json();
+    
+    if (result.success) {
+      allPersons = result.persons;
+    }
+  } catch (error) {
+    console.error('Error cargando personas:', error);
+  }
+}
+
+function filtrarPorPersona() {
+  const searchTerm = document.getElementById('personSearch').value.toLowerCase().trim();
+  const suggestions = document.getElementById('personSuggestions');
+  
+  if (searchTerm.length === 0) {
+    suggestions.style.display = 'none';
+    mostrarTodasLasFotos();
+    return;
+  }
+  
+  // Mostrar sugerencias
+  const matchingPersons = allPersons.filter(person => 
+    person.nombre.toLowerCase().includes(searchTerm)
+  );
+  
+  if (matchingPersons.length > 0) {
+    suggestions.innerHTML = matchingPersons.map(person => `
+      <div class="person-suggestion" onclick="seleccionarPersona('${person.nombre}')">
+        <i class="fas fa-user me-2"></i>${person.nombre}
+      </div>
+    `).join('');
+    suggestions.style.display = 'block';
+  } else {
+    suggestions.style.display = 'none';
+  }
+  
+  // Filtrar fotos en tiempo real
+  filtrarFotosPorTexto(searchTerm);
+}
+
+function seleccionarPersona(nombrePersona) {
+  document.getElementById('personSearch').value = nombrePersona;
+  document.getElementById('personSuggestions').style.display = 'none';
+  filtrarFotosPorPersona(nombrePersona);
+}
+
+function filtrarFotosPorPersona(nombrePersona) {
+  currentFilter = 'persona:' + nombrePersona;
+  const photos = document.querySelectorAll('[data-photo-id]');
+  let visibleCount = 0;
+  
+  photos.forEach(photo => {
+    const personasText = photo.getAttribute('data-personas') || '';
+    const hasPersona = personasText.toLowerCase().includes(nombrePersona.toLowerCase());
+    
+    if (hasPersona) {
+      photo.classList.remove('filtered-photo');
+      photo.classList.add('visible-photo');
+      visibleCount++;
+    } else {
+      photo.classList.add('filtered-photo');
+      photo.classList.remove('visible-photo');
+    }
+  });
+  
+  actualizarContador(visibleCount);
+}
+
+function filtrarFotosPorTexto(searchTerm) {
+  const photos = document.querySelectorAll('[data-photo-id]');
+  let visibleCount = 0;
+  
+  photos.forEach(photo => {
+    const personasText = photo.getAttribute('data-personas') || '';
+    const fotoNombre = photo.getAttribute('data-foto-nombre') || '';
+    
+    const matchPersona = personasText.toLowerCase().includes(searchTerm);
+    const matchNombre = fotoNombre.toLowerCase().includes(searchTerm);
+    
+    if (matchPersona || matchNombre) {
+      photo.classList.remove('filtered-photo');
+      photo.classList.add('visible-photo');
+      visibleCount++;
+    } else {
+      photo.classList.add('filtered-photo');
+      photo.classList.remove('visible-photo');
+    }
+  });
+  
+  actualizarContador(visibleCount);
+}
+
+function mostrarTodasLasFotos() {
+  currentFilter = '';
+  const photos = document.querySelectorAll('[data-photo-id]');
+  
+  photos.forEach(photo => {
+    photo.classList.remove('filtered-photo');
+    photo.classList.add('visible-photo');
+  });
+  
+  actualizarContador(photos.length);
+}
+
+function limpiarFiltro() {
+  document.getElementById('personSearch').value = '';
+  document.getElementById('personSuggestions').style.display = 'none';
+  mostrarTodasLasFotos();
+}
+
+function actualizarContador(visibleCount) {
+  const totalElement = document.getElementById('totalPhotos');
+  const selectedElement = document.getElementById('selectedCount');
+  const selectedNumber = document.getElementById('selectedNumber');
+  
+  if (currentFilter === '') {
+    // No mostrar contador filtrado si no hay filtro
+  } else {
+    // Actualizar el texto principal para mostrar filtrado
+    totalElement.textContent = visibleCount;
+  }
+}
+
+// Función para etiquetar foto
+function etiquetarFoto(fotoId) {
+  // Redirigir al procesamiento de reconocimiento facial para esta foto específica
+  htmx.ajax('GET', `/api/procesar-reconocimiento-facial?ids=${fotoId}`, {
+    target: '#panel-content',
+    swap: 'innerHTML'
+  });
+}
+
+// Las funciones del modal ahora están en index.html como funciones globales
+
+// Función para procesar reconocimiento facial de las fotos recién subidas
+function procesarReconocimiento() {
+  // Obtener los IDs de las fotos desde la URL actual
+  const urlParams = new URLSearchParams(window.location.search);
+  const ids = urlParams.get('ids') || '';
+  
+  if (ids) {
+    // Redirigir al procesamiento de reconocimiento facial
+    htmx.ajax('GET', `/procesando-reconocimiento?ids=${ids}`, {
+      target: '#panel-content', 
+      swap: 'innerHTML'
+    });
+  } else {
+    // Si no hay IDs en la URL, obtener todos los IDs de las fotos mostradas
+    const photoCards = document.querySelectorAll('[data-photo-id]');
+    const photoIds = Array.from(photoCards).map(card => card.dataset.photoId).join(',');
+    
+    if (photoIds) {
+      htmx.ajax('GET', `/procesando-reconocimiento?ids=${photoIds}`, {
+        target: '#panel-content', 
+        swap: 'innerHTML'
+      });
+    } else {
+      alert('No se encontraron fotos para procesar');
+    }
+  }
+}
+</script>

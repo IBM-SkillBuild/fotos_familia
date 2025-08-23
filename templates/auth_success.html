@@ -1,0 +1,136 @@
+<link
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+rel="stylesheet"
+/>
+    <link
+      href="{{ url_for('static', filename='css/dark-theme-fixes.css') }}"
+      rel="stylesheet"
+    />
+<link
+href="{{ url_for('static', filename='css/styles.css') }}"
+rel="stylesheet"
+/>
+<!-- Mensaje de éxito de autenticación -->
+<div style="
+    width: 100%;
+    min-height: 100vh;
+    background: #0f0f23;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    position: relative;
+    overflow: hidden;
+">
+    <!-- Animated background -->
+    <div style="
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                    radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+        animation: float 6s ease-in-out infinite;
+    "></div>
+    
+    <div style="
+        position: relative;
+        text-align: center;
+        max-width: 400px;
+        padding: 60px 40px;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 32px 64px rgba(0, 0, 0, 0.4);
+    ">
+        <!-- Success icon with animation -->
+        <div style="
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #00d4aa, #00b894);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 32px;
+            box-shadow: 0 20px 40px rgba(0, 212, 170, 0.3);
+            animation: checkmark 0.6s ease-in-out;
+        ">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20,6 9,17 4,12"></polyline>
+            </svg>
+        </div>
+        
+        <h1 style="
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 16px 0;
+            letter-spacing: -0.5px;
+        ">¡Autenticación Exitosa!</h1>
+        
+        <p style="
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 0 0 40px 0;
+        ">Has iniciado sesión correctamente.<br>Bienvenido de vuelta.</p>
+        
+        <a href="/" style="
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+        " onmouseover="
+            this.style.transform='translateY(-2px)';
+            this.style.boxShadow='0 12px 48px rgba(102, 126, 234, 0.6)';
+        " onmouseout="
+            this.style.transform='translateY(0)';
+            this.style.boxShadow='0 8px 32px rgba(102, 126, 234, 0.4)';
+        ">Continuar al Panel</a>
+        
+        <div style="
+            margin-top: 24px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+        ">Redirigiendo automáticamente en <span id="countdown">3</span> segundos...</div>
+    </div>
+    
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-10px) rotate(1deg); }
+            66% { transform: translateY(5px) rotate(-1deg); }
+        }
+        
+        @keyframes checkmark {
+            0% { transform: scale(0) rotate(45deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(45deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+    </style>
+    
+    <script>
+        let countdown = 3;
+        const countdownElement = document.getElementById('countdown');
+        
+        const timer = setInterval(() => {
+            countdown--;
+            countdownElement.textContent = countdown;
+            
+            if (countdown <= 0) {
+                clearInterval(timer);
+                window.location.href = '/';
+            }
+        }, 1000);
+    </script>
+</div>

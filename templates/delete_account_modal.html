@@ -1,0 +1,115 @@
+<!-- Modal para eliminar cuenta -->
+<div class="modal-header bg-danger text-white">
+  <h5 class="modal-title">🗑️ Eliminar Cuenta</h5>
+  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body">
+  <div class="alert alert-danger">
+    <h6 class="alert-heading">⚠️ ¡Atención! Esta acción es irreversible</h6>
+    <p class="mb-0">
+      Al eliminar tu cuenta, se borrará permanentemente toda tu información.
+    </p>
+  </div>
+  
+  <div class="mb-4">
+    <h6 class="text-danger mb-3">📋 ¿Qué se eliminará?</h6>
+    <ul class="list-unstyled">
+      <li class="mb-2">
+        <span class="text-danger">❌</span> <strong>Información personal:</strong> {{ user.name }} ({{ user.email }})
+      </li>
+      <li class="mb-2">
+        <span class="text-danger">❌</span> <strong>Cuenta activa por:</strong> {{ stats.days_active }} días
+      </li>
+      {% if stats.has_phone %}
+      <li class="mb-2">
+        <span class="text-danger">❌</span> <strong>Teléfono registrado:</strong> {{ user.phone }}
+      </li>
+      {% endif %}
+      {% if stats.email_requests > 0 %}
+      <li class="mb-2">
+        <span class="text-danger">❌</span> <strong>Solicitudes de cambio:</strong> {{ stats.email_requests }} pendientes
+      </li>
+      {% endif %}
+      <li class="mb-2">
+        <span class="text-danger">❌</span> <strong>Historial completo:</strong> Todos los logs y actividad
+      </li>
+    </ul>
+  </div>
+  
+  <div class="alert alert-info">
+    <h6 class="alert-heading">🔒 Política de datos</h6>
+    <p class="mb-0">
+      <strong>No guardamos ningún dato</strong> después de eliminar tu cuenta. 
+      La eliminación es completa e inmediata.
+    </p>
+  </div>
+  
+  <div class="mb-4">
+    <h6 class="text-warning mb-3">⚡ Proceso de eliminación:</h6>
+    <ol class="small">
+      <li>Se cerrará tu sesión actual inmediatamente</li>
+      <li>Se eliminarán todos tus datos de nuestros servidores</li>
+      <li>No podrás recuperar la información eliminada</li>
+      <li>Serás redirigido a la página de inicio</li>
+    </ol>
+  </div>
+  
+  <form hx-post="/api/profile/delete-account" 
+        hx-target="#delete-account-alerts" 
+        hx-swap="innerHTML"
+        hx-indicator="#delete-loading">
+    
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <div class="mb-3">
+      <label for="confirmEmail" class="form-label">
+        <strong>Para confirmar, escribe tu email:</strong>
+      </label>
+      <input type="email" class="form-control input-lg" id="confirmEmail" name="confirm_email" 
+             placeholder="{{ user.email }}" required>
+      <div class="form-text">Debes escribir exactamente: <code>{{ user.email }}</code></div>
+    </div>
+    
+    <div class="mb-3">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="confirmDelete" name="confirm_delete" required>
+        <label class="form-check-label text-danger" for="confirmDelete">
+          <strong>Entiendo que esta acción es irreversible y eliminará permanentemente mi cuenta</strong>
+        </label>
+      </div>
+    </div>
+    
+    <!-- Alertas de eliminación -->
+    <div id="delete-account-alerts" class="mb-3"></div>
+    
+    <div class="d-grid gap-2">
+      <button type="submit" class="btn btn-danger btn-lg">
+        <span class="btn-text">🗑️ ELIMINAR MI CUENTA PERMANENTEMENTE</span>
+        <span id="delete-loading" class="spinner-border spinner-border-sm d-none" role="status"></span>
+      </button>
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        ← Cancelar (mantener mi cuenta)
+      </button>
+    </div>
+  </form>
+</div>
+
+<style>
+.alert-danger {
+  border-left: 4px solid #dc3545;
+}
+
+.alert-info {
+  border-left: 4px solid #0dcaf0;
+}
+
+.form-check-input:checked {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  transform: none;
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+</style>

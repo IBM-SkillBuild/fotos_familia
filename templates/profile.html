@@ -1,0 +1,324 @@
+    <link
+      href="{{ url_for('static', filename='css/dark-theme-fixes.css') }}"
+      rel="stylesheet"
+    />
+<!-- Template de Perfil de Usuario -->
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-10 mx-auto">
+      <div class="card user-info-card">
+        <div
+          class="card-header dashboard-header d-flex justify-content-between align-items-center"
+        >
+          <h4 class="mb-0">👤 Mi Perfil</h4>
+          <div>
+          
+           
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Información Personal -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h5 class="mb-3">📋 Información Personal</h5>
+              <p class="text-muted small mb-3">
+                Actualiza tu información básica. Los cambios se guardan
+                inmediatamente.
+              </p>
+
+              <form
+                hx-post="/api/profile/update"
+                hx-target="#profile-alerts"
+                hx-swap="innerHTML"
+                hx-indicator="#profile-loading"
+              >
+                <input
+                  type="hidden"
+                  name="csrf_token"
+                  value="{{ csrf_token() }}"
+                />
+                <div class="mb-3">
+                  <label for="profileName" class="form-label"
+                    >Nombre/Alias</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="profileName"
+                    name="name"
+                    value="{{ user.name }}"
+                    required
+                  />
+                </div>
+
+                <div class="mb-3">
+                  <div class="form-text">
+                    Para cambiar tu email, usa la opción en Seguridad
+                  </div>
+                </div>
+
+                {% if user.phone %}
+                <div class="mb-3">
+                  <label for="profilePhone" class="form-label">Teléfono</label>
+                  <input
+                    type="tel"
+                    class="form-control"
+                    id="profilePhone"
+                    name="phone"
+                    value="{{ user.phone }}"
+                  />
+                </div>
+                {% endif %}
+
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-primary">
+                    <span class="btn-text">💾 Guardar Cambios</span>
+                    <span
+                      id="profile-loading"
+                      class="spinner-border spinner-border-sm d-none"
+                      role="status"
+                    ></span>
+                  </button>
+                </div>
+              </form>
+
+              <!-- Alertas del perfil -->
+              <div id="profile-alerts" class="mt-3"></div>
+            </div>
+
+            <div class="col-md-6">
+              <h5 class="mb-3">📊 Estadísticas de Cuenta</h5>
+
+              <div class="card bg-light">
+                <div class="card-body">
+                  <div class="row text-center">
+                    <div class="col-6">
+                      <div class="mb-2">
+                        <strong class="text-primary fs-4">{{ user.id }}</strong>
+                      </div>
+                      <small class="text-muted">ID de Usuario</small>
+                    </div>
+                    <div class="col-6">
+                      <div class="mb-2">
+                        <strong class="text-success fs-4">
+                          {% if user.created_at %} {{ ((user.created_at |
+                          string)[:10] | replace('-', '') | int - 20250101) //
+                          10000 + 1 }} {% else %} 1 {% endif %}
+                        </strong>
+                      </div>
+                      <small class="text-muted">Días Activo</small>
+                    </div>
+                  </div>
+
+                  <hr />
+
+                  <div class="mb-2">
+                    <strong>Registrado:</strong><br />
+                    <span class="text-muted"
+                      >{{ user.created_at[:19] if user.created_at else 'No
+                      disponible' }}</span
+                    >
+                  </div>
+
+                  <div class="mb-2">
+                    <strong>Última actualización:</strong><br />
+                    <span class="text-muted"
+                      >{{ user.updated_at[:19] if user.updated_at else 'No
+                      disponible' }}</span
+                    >
+                  </div>
+
+                  <div class="mb-2">
+                    <strong>Estado de cuenta:</strong><br />
+                    <span class="badge bg-success">✓ Activa</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Seguridad -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <h5 class="mb-3">🔒 Seguridad</h5>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="card border-warning">
+                    <div class="card-body">
+                      <h6 class="card-title">🔑 Cambiar Email</h6>
+                      <p class="card-text small text-muted">
+                        Actualiza tu dirección de email. Requerirá verificación.
+                      </p>
+                      <button
+                        class="btn btn-warning btn-sm"
+                        hx-get="/profile/change-email"
+                        hx-target="#security-modal"
+                        hx-swap="innerHTML"
+                        data-bs-toggle="modal"
+                        data-bs-target="#securityModal"
+                      >
+                        Cambiar Email
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="card border-danger">
+                    <div class="card-body">
+                      <h6 class="card-title">🗑️ Eliminar Cuenta</h6>
+                      <p class="card-text small text-muted">
+                        Elimina permanentemente tu cuenta y todos los datos.
+                      </p>
+                      <button
+                        class="btn btn-danger btn-sm"
+                        hx-get="/profile/delete-account-page"
+                        hx-target="#panel-content"
+                        hx-swap="innerHTML"
+                      >
+                        Eliminar Cuenta
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actividad Reciente -->
+          <div class="row">
+            <div class="col-12">
+              <h5 class="mb-3">📈 Actividad Reciente</h5>
+
+              <div class="card">
+                <div class="card-body">
+                  <div
+                    id="activity-log"
+                    hx-get="/api/profile/activity"
+                    hx-trigger="load"
+                    hx-swap="innerHTML"
+                  >
+                    <div class="text-center">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Seguridad -->
+<div class="modal fade" id="securityModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div id="security-modal">
+        <!-- Contenido cargado dinámicamente -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmación de logout (reutilizado) -->
+<div class="modal fade" id="logoutModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirmar Cierre de Sesión</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">¿Estás seguro de que quieres cerrar sesión?</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-danger" onclick="confirmLogout()">
+          Cerrar Sesión
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Mostrar navbar cuando se carga el perfil
+  const navbar = document.querySelector('#navbar-container');
+  if (navbar) {
+    navbar.style.display = 'block';
+  }
+
+  // Reutilizar funciones de logout del dashboard
+  function logout() {
+    const modal = new bootstrap.Modal(document.getElementById("logoutModal"));
+    modal.show();
+  }
+
+  async function confirmLogout() {
+    try {
+      const button = event.target;
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = "Cerrando...";
+
+      const response = await fetch("/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          window.location.href = data.redirect || "/";
+        } else {
+          throw new Error("Logout failed");
+        }
+      } else {
+        throw new Error(`HTTP ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+      window.location.href = "/";
+    }
+  }
+
+  // Función loadDeleteModal removida - ahora usamos HTMX
+
+  // Manejar indicadores de carga en formularios
+  document.addEventListener("htmx:beforeRequest", function (event) {
+    const indicator = event.target.querySelector("[hx-indicator]");
+    if (indicator) {
+      const loadingElement = document.querySelector(
+        indicator.getAttribute("hx-indicator")
+      );
+      if (loadingElement) {
+        loadingElement.classList.remove("d-none");
+      }
+    }
+  });
+
+  document.addEventListener("htmx:afterRequest", function (event) {
+    const indicator = event.target.querySelector("[hx-indicator]");
+    if (indicator) {
+      const loadingElement = document.querySelector(
+        indicator.getAttribute("hx-indicator")
+      );
+      if (loadingElement) {
+        loadingElement.classList.add("d-none");
+      }
+    }
+  });
+</script>

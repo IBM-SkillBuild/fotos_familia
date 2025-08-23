@@ -1,0 +1,102 @@
+    <link
+      href="{{ url_for('static', filename='css/dark-theme-fixes.css') }}"
+      rel="stylesheet"
+    />
+<div
+  class="modal d-block"
+  style="background-color: rgba(0, 0, 0, 0.5)"
+  tabindex="-1"
+  id="sessionWarningModal"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title">⚠️ Fin de Sesión Próximo</h5>
+      </div>
+      <div class="modal-body text-center">
+        <div class="alert alert-warning mb-3">
+          <strong>Tu sesión expirará pronto</strong>
+        </div>
+        <p><strong>Tiempo restante:</strong> {{ time_remaining }}</p>
+        <p>¿Qué deseas hacer?</p>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button
+          type="button"
+          class="btn btn-danger me-2"
+          hx-post="/logout"
+          hx-swap="none"
+          hx-on::after-request="window.location.href = '/'"
+        >
+          Cerrar Sesión
+        </button>
+        <button
+          type="button"
+          class="btn btn-success"
+          hx-post="/api/extend-session"
+          hx-swap="none"
+          hx-on::after-request="handleExtendResponse(event)"
+        >
+          Aumentar Sesión por 8 Horas Más
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function closeWarningModal() {
+    document.getElementById("sessionWarningModal").remove();
+  }
+
+  function handleExtendResponse(event) {
+    if (event.detail.xhr.status === 200) {
+      const data = JSON.parse(event.detail.xhr.responseText);
+      closeWarningModal();
+
+      // Actualizar el tiempo en el dashboard inmediatamente
+      const sessionTimeElement = document.getElementById(
+        "session-time-remaining"
+      );
+      if (sessionTimeElement) {
+        // Hacer una petición HTMX para actualizar el tiempo
+        htmx.ajax("GET", "/api/session-status", {
+          target: "#session-time-remaining",
+          swap: "outerHTML",
+        });
+      }
+
+      // Mostrar mensaje de confirmación
+      const alert = document.createElement("div");
+      alert.className = "alert alert-success position-fixed top-0 end-0 m-3";
+      alert.style.zIndex = "9999";
+      alert.innerHTML = `
+        <div><strong>✓ Sesión extendida exitosamente</strong></div>
+        <div>Nueva expiración: ${data.new_expires}</div>
+        <button type="button" class="btn-close ms-2" onclick="this.parentElement.remove()"></button>
+      `;
+      document.body.appendChild(alert);
+
+      // Redirigir inmediatamente
+      window.location.href = '/';
+    } else {
+      closeWarningModal();
+
+      // Mostrar error
+      const alert = document.createElement("div");
+      alert.className = "alert alert-danger position-fixed top-0 end-0 m-3";
+      alert.style.zIndex = "9999";
+      alert.innerHTML = `
+        <strong>✗ Error al extender sesión</strong>
+        <button type="button" class="btn-close ms-2" onclick="this.parentElement.remove()"></button>
+      `;
+      document.body.appendChild(alert);
+
+      setTimeout(() => {
+        if (alert.parentElement) {
+          alert.remove();
+        }
+      }, 3000);
+    }
+  }
+</script>

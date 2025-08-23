@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache, no-store, must-revalidate"
+    />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <title id="page-title">Fotos de familia</title>
+
+    <!-- SEO Meta Tags -->
+    <meta
+      name="description"
+      content="Explora y gestiona tus fotos de familia con un sistema de autenticación seguro por código de email. Acceso rápido y protegido."
+    />
+    <meta
+      name="keywords"
+      content="fotos de familia, autenticación, email, código, seguridad, login, acceso, galería"
+    />
+    <meta name="author" content="ecabrerablazque@gmail.com" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="{{ request.url }}" />
+    <meta name="generator" content="Flask" />
+    <meta name="theme-color" content="#0d6efd" />
+    <meta name="msapplication-TileColor" content="#0d6efd" />
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
+
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Fotos Familia">
+    <meta name="application-name" content="Fotos de Familia">
+    <meta name="msapplication-TileColor" content="#0d6efd">
+    <meta name="msapplication-TileImage" content="{{ url_for('static', filename='icons/icon-144x144.png') }}">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    
+    <!-- Favicons y Apple Touch Icons -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/icon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='icons/icon-16x16.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+    <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='icons/icon-152x152.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+    <link rel="apple-touch-icon" sizes="167x167" href="{{ url_for('static', filename='icons/icon-152x152.png') }}">
+    
+    <!-- Splash Screens para iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-startup-image" href="{{ url_for('static', filename='icons/icon-512x512.png') }}" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+    <link rel="apple-touch-startup-image" href="{{ url_for('static', filename='icons/icon-512x512.png') }}" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Fotos de Familia - Galería Segura" />
+    <meta
+      property="og:description"
+      content="Gestiona tus fotos de familia con un sistema de autenticación seguro por código de email. Acceso rápido y protegido."
+    />
+    <meta property="og:url" content="{{ request.url }}" />
+    <meta property="og:image" content="{{ url_for('static', filename='images/edu-1200x630.png') }}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Fotos de Familia - Galería Segura" />
+    <meta
+      name="twitter:description"
+      content="Gestiona tus fotos de familia con un sistema de autenticación seguro por código de email."
+    />
+    <meta name="twitter:image" content="{{ url_for('static', filename='images/edu-1200x630.png') }}" />
+
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Fotos de Familia",
+      "description": "Sistema seguro de gestión de fotos familiares con autenticación por código de email",
+      "url": "{{ request.url }}",
+      "applicationCategory": "PhotographyApplication",
+      "operatingSystem": "Web Browser",
+      "author": {
+        "@type": "Person",
+        "name": "Eduardo Cabrera",
+        "email": "ecabrerablazque@gmail.com"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
+    <!-- CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="{{ url_for('static', filename='css/styles.css') }}"
+      rel="stylesheet"
+    />
+    <link
+      href="{{ url_for('static', filename='css/pwa.css') }}"
+      rel="stylesheet"
+    />
+    
+    <!-- Estilos para el modal de fotos -->
+    <style>
+      .photo-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 9999;
+      }
+      .photo-modal.show {
+        opacity: 1;
+      }
+      .photo-modal-backdrop {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+      }
+      .photo-modal-content {
+        position: relative;
+        background: white;
+        border-radius: 8px;
+        max-width: 90vw;
+        max-height: 90vh;
+        overflow: hidden;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+      }
+      .photo-modal.show .photo-modal-content {
+        transform: scale(1);
+      }
+      .photo-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: #f8f9fa;
+      }
+      .photo-modal-header h5 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 500;
+      }
+      .photo-modal-close {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 4px;
+        transition: all 0.2s;
+      }
+      .photo-modal-close:hover {
+        background-color: #e9ecef;
+        color: #495057;
+      }
+      .photo-modal-body {
+        padding: 0;
+        text-align: center;
+        position: relative;
+      }
+      .photo-modal-image {
+        max-width: 100%;
+        max-height: calc(90vh - 120px);
+        height: auto;
+        display: block;
+        margin: 0 auto;
+        cursor: pointer;
+      }
+      .photo-nav-button {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0,0,0,0.7);
+        color: #1e90ff;
+        border: none;
+        padding: 12px;
+        cursor: pointer;
+        font-size: 1.2rem;
+        z-index: 10000;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      }
+      .photo-nav-button:hover {
+        background: rgba(30,144,255,0.8);
+        color: white;
+        transform: translateY(-50%) scale(1.1);
+      }
+      .photo-nav-button.prev { left: 15px; }
+      .photo-nav-button.next { right: 15px; }
+      .photo-modal-footer {
+        padding: 1rem;
+        text-align: center;
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+      }
+      
+      /* Ajustes para móviles */
+      @media (max-width: 576px) {
+        .photo-modal-content {
+          max-width: 95vw;
+          max-height: 95vh;
+        }
+        .photo-modal-image {
+          max-height: calc(95vh - 100px);
+        }
+        .photo-modal-header h5 {
+          font-size: 1rem;
+        }
+        .photo-modal-close {
+          font-size: 1rem;
+        }
+      }
+    </style>
+    <link
+      href="{{ url_for('static', filename='css/dark-theme-fixes.css') }}"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+
+    <style>
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px) rotate(0deg);
+        }
+        33% {
+          transform: translateY(-10px) rotate(1deg);
+        }
+        66% {
+          transform: translateY(5px) rotate(-1deg);
+        }
+      }
+
+      .navbar-transparent {
+        background-color: rgba(13, 110, 253, 0.9) !important;
+        backdrop-filter: none !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .navbar-opaque {
+        background-color: rgba(13, 110, 253, 1) !important;
+        backdrop-filter: none !important;
+        transition: all 0.3s ease !important;
+      }
+
+      /* Ocultar barras de scroll */
+      html,
+      body {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar {
+        display: none;
+      }
+
+      *::-webkit-scrollbar {
+        display: none;
+      }
+
+      * {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      /* Estilos para la sección hero SEO */
+      .hero-section {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                    radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+        animation: float 6s ease-in-out infinite;
+        z-index: -1;
+      }
+
+      .feature-card {
+        transition: all 0.3s ease;
+        transform: translateY(0);
+      }
+
+      .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      }
+
+      .display-4 {
+        font-size: 3.5rem;
+        line-height: 1.2;
+      }
+
+      @media (max-width: 768px) {
+        .display-4 {
+          font-size: 2.5rem;
+        }
+        .hero-section {
+          padding: 3rem 1rem !important;
+        }
+      }
+
+      /* Estilos para la barra de herramientas */
+      #navbar-container {
+        margin-bottom: 0 !important;
+        display: none; /* Ocultar el menú en la página de inicio */
+      }
+
+      /* Estilos para el indicador de carga */
+      .loading-indicator {
+        animation: fadeInOut 3s ease-in-out infinite;
+      }
+
+      @keyframes fadeInOut {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+      }
+
+      /* Animación de puntos de carga mejorada */
+      .loading-dots {
+        display: inline-flex;
+        gap: 4px;
+      }
+
+      .loading-dots .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #0d6efd;
+        animation: dotPulse 1.2s ease-in-out infinite;
+      }
+
+      .loading-dots .dot:nth-child(1) { animation-delay: 0s; }
+      .loading-dots .dot:nth-child(2) { animation-delay: 0.2s; }
+      .loading-dots .dot:nth-child(3) { animation-delay: 0.4s; }
+
+      @keyframes dotPulse {
+        0%, 70%, 100% {
+          transform: scale(0.8);
+          opacity: 0.5;
+        }
+        35% {
+          transform: scale(1.2);
+          opacity: 1;
+        }
+      }
+
+      /* Spinner principal - usar animación nativa de Bootstrap */
+      .spinner-border {
+        /* Dejar que Bootstrap maneje la animación de rotación */
+      }
+
+      /* Efecto de respiración solo para el contenedor del spinner */
+      .loading-indicator .spinner-border {
+        animation: breathe 2s ease-in-out infinite;
+      }
+
+      @keyframes breathe {
+        0%, 100% { 
+          opacity: 0.8;
+        }
+        50% { 
+          opacity: 1;
+        }
+      }
+
+      /* Efecto de brillo en el texto de carga */
+      .loading-text h5 {
+        animation: textGlow 2s ease-in-out infinite alternate;
+      }
+
+      @keyframes textGlow {
+        from {
+          text-shadow: 0 0 5px rgba(13, 110, 253, 0.3);
+        }
+        to {
+          text-shadow: 0 0 15px rgba(13, 110, 253, 0.6), 0 0 25px rgba(13, 110, 253, 0.4);
+        }
+      }
+
+      #gallery-navbar-row {
+        position: fixed;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem !important;
+        margin: 0 !important;
+        background-color: rgba(0, 0, 0, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      @media (max-width: 576px) {
+        #gallery-navbar-row {
+          flex-direction: column !important;
+          align-items: stretch !important;
+        }
+        #gallery-navbar-row .d-flex.align-items-center {
+          flex-direction: column;
+          align-items: stretch;
+          width: 100%;
+          gap: 0.5rem;
+        }
+        #gallery-navbar-row input.form-control {
+          width: 100% !important;
+          margin-left: 0 !important;
+        }
+        #gallery-navbar-row .btn {
+          width: 100%;
+          font-size: 0.9rem;
+        }
+        #gallery-navbar-row .d-flex.gap-2 {
+          flex-direction: column;
+          gap: 0.5rem;
+          margin-right: 0 !important;
+        }
+      }
+    </style>
+  </head>
+  <body
+    x-data="{ init() { console.log('Alpine Store initialized:', $store.app) } }"
+    x-init="init()"
+    hx-get="/api/session-warning"
+    hx-trigger="load, every 30s"
+    hx-swap="beforeend"
+    hx-indicator="none"
+    style="
+      width: 100%;
+      min-height: 100vh;
+      background: #0f0f23;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        sans-serif;
+      position: relative;
+      overflow: hidden;
+    "
+  >
+    <!-- Animated background -->
+    <div
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+            circle at 20% 50%,
+            rgba(120, 119, 198, 0.3) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 20%,
+            rgba(255, 119, 198, 0.3) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 40% 80%,
+            rgba(120, 219, 255, 0.3) 0%,
+            transparent 50%
+          );
+        animation: float 6s ease-in-out infinite;
+        z-index: -1;
+      "
+    ></div>
+
+    <!-- Zona del navegador -->
+    <div id="navbar-container" >
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">Fotos de Familia</a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#mobileNav"
+            aria-controls="mobileNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="mobileNav">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a
+                  class="nav-link"
+                  hx-get="/dashboard"
+                  hx-target="#main-content"
+                  hx-swap="innerHTML"
+                  >Dashboard</a
+                >
+              </li>
+              <li class="nav-item">
+                <a
+                  class="nav-link"
+                  hx-get="/perfil"
+                  hx-target="#main-content"
+                  hx-swap="innerHTML"
+                  >Perfil</a
+                >
+              </li>
+              <li class="nav-item">
+                <a
+                  class="nav-link"
+                  hx-get="/selector_fotos"
+                  hx-target="#main-content"
+                  hx-swap="innerHTML"
+                  >Fotos</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" onclick="logout()">Salir</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Contenedor principal para contenido -->
+    <div
+      id="main-content"
+      hx-get="/initial-content"
+      hx-trigger="load delay:3s"
+      hx-swap="innerHTML"
+      hx-indicator="#loading-indicator"
+    >
+      <!-- Contenido estático inicial para SEO -->
+      <main class="hero-section text-center py-5" style="background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+        <div class="container">
+          <h1 class="display-4 text-white mb-4" style="font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+            📸 Fotos de Familia
+          </h1>
+          <h2 class="h3 text-light mb-4" style="font-weight: 400; opacity: 0.9;">
+            Sistema Seguro de Gestión y Visualización
+          </h2>
+          <p class="lead text-light mb-5" style="font-size: 1.25rem; opacity: 0.8; max-width: 600px; margin: 0 auto;">
+            Accede a tu galería personal de fotos familiares con autenticación segura por código de email. 
+            Organiza, etiqueta y comparte tus recuerdos más preciados de forma privada y protegida.
+          </p>
+          <div class="features-grid row g-4 mb-5">
+            <div class="col-md-4">
+              <div class="feature-card p-4 rounded" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
+                <i class="fas fa-shield-alt text-primary mb-3" style="font-size: 2.5rem; color: #0d6efd !important;"></i>
+                <h3 class="h5 text-white mb-3">🔒 Seguridad Máxima</h3>
+                <p class="text-light small">Autenticación de dos factores con código por email</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="feature-card p-4 rounded" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
+                <i class="fas fa-users text-primary mb-3" style="font-size: 2.5rem; color: #0d6efd !important;"></i>
+                <h3 class="h5 text-white mb-3">👥 Etiquetado Inteligente</h3>
+                <p class="text-light small">Reconocimiento facial y organización automática</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="feature-card p-4 rounded" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
+                <i class="fas fa-mobile-alt text-primary mb-3" style="font-size: 2.5rem; color: #0d6efd !important;"></i>
+                <h3 class="h5 text-white mb-3">📱 Responsive Total</h3>
+                <p class="text-light small">Accede desde cualquier dispositivo con diseño adaptativo</p>
+              </div>
+            </div>
+          </div>
+          <div class="cta-section">
+            <p class="text-light mb-4" style="opacity: 0.7;">
+              <i class="fas fa-info-circle me-2"></i>
+              El contenido se cargará automáticamente. Si no ves la página de login, 
+              <a href="#" onclick="location.reload()" class="text-primary text-decoration-none">haz clic aquí</a>.
+            </p>
+            
+            <!-- Indicador de carga mejorado -->
+            <div class="loading-indicator text-center mt-4" id="loading-indicator">
+              <div class="d-flex align-items-center justify-content-center mb-3">
+                <div class="spinner-border text-primary me-3" role="status" style="width: 2rem; height: 2rem;">
+                  <span class="visually-hidden">Cargando...</span>
+                </div>
+                <div class="loading-dots">
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                </div>
+              </div>
+              <div class="loading-text">
+                <h5 class="text-light mb-2" style="font-weight: 300;">🚀 Preparando Aplicación</h5>
+                <p class="text-light small mb-2" style="opacity: 0.7;">
+                  <i class="fas fa-shield-alt me-1" style="color: #0d6efd !important;"></i>
+                  Inicializando sistema de autenticación segura
+                </p>
+                <p class="text-light small" style="opacity: 0.5;">
+                  <i class="fas fa-clock me-1" style="color: #6c757d !important;"></i>
+                  <span id="countdown-text">Cargando...</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="{{ url_for('static', filename='js/paginacion.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/store.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+    <script
+      defer
+      src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+      // Registrar Service Worker para PWA
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/static/sw.js')
+            .then(registration => {
+              console.log('SW: Service Worker registrado exitosamente:', registration.scope);
+              
+              // Verificar actualizaciones
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // Nueva versión disponible
+                    if (confirm('Nueva versión disponible. ¿Actualizar ahora?')) {
+                      newWorker.postMessage({ type: 'SKIP_WAITING' });
+                      window.location.reload();
+                    }
+                  }
+                });
+              });
+            })
+            .catch(error => {
+              console.log('SW: Error registrando Service Worker:', error);
+            });
+        });
+
+        // Escuchar cambios del Service Worker
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          window.location.reload();
+        });
+      }
+
+      // Detectar si la app está instalada como PWA
+      let deferredPrompt;
+      let installButton;
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('PWA: Evento beforeinstallprompt disparado');
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Mostrar botón de instalación personalizado
+        showInstallButton();
+        
+        // Mostrar banner superior también
+        showInstallBanner();
+      });
+
+      // Función global para verificar y mostrar banners PWA
+      window.checkAndShowPWABanners = function() {
+        const isInstalled = isPWA();
+        console.log('PWA: Estado de instalación:', {
+          isInstalled: isInstalled,
+          displayMode: window.matchMedia('(display-mode: standalone)').matches,
+          standalone: window.navigator.standalone,
+          userAgent: navigator.userAgent,
+          referrer: document.referrer,
+          viewport: {
+            outerWidth: window.outerWidth,
+            innerWidth: window.innerWidth,
+            outerHeight: window.outerHeight,
+            innerHeight: window.innerHeight
+          }
+        });
+        
+        if (!isInstalled) {
+          console.log('PWA: App no instalada, mostrando banner de instalación');
+          showInstallBanner();
+          showInstallButton();
+        } else {
+          console.log('PWA: App ya instalada, no mostrando banner');
+        }
+      };
+
+      // Mostrar banner siempre, no solo cuando hay evento beforeinstallprompt
+      window.addEventListener('load', () => {
+        // Esperar un poco para que cargue todo
+        setTimeout(() => {
+          window.checkAndShowPWABanners();
+        }, 2000);
+      });
+
+      function showInstallBanner() {
+        if (document.getElementById('pwa-install-banner')) return;
+        
+        const os = detectOS();
+        const banner = document.createElement('div');
+        banner.id = 'pwa-install-banner';
+        banner.className = 'alert alert-success alert-dismissible fade show position-fixed w-100';
+        banner.style.cssText = `
+          top: 0;
+          left: 0;
+          z-index: 1060;
+          margin: 0;
+          border-radius: 0;
+          border: none;
+          background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+          box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        `;
+        
+        let icon = 'fas fa-download';
+        if (os === 'Android') icon = 'fab fa-android';
+        else if (os === 'iOS') icon = 'fab fa-apple';
+        else if (os === 'Windows') icon = 'fab fa-windows';
+        
+        banner.innerHTML = `
+          <div class="container-fluid d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+              <i class="${icon} me-2" style="font-size: 1.2rem;"></i>
+              <span><strong>¡Instala la App!</strong> Disponible para ${os}</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-light btn-sm" onclick="installPWA()" style="font-weight: 600;">
+                <i class="fas fa-plus me-1"></i>Instalar
+              </button>
+              <button type="button" class="btn-close btn-close-white" onclick="dismissInstallBanner()"></button>
+            </div>
+          </div>
+        `;
+        
+        document.body.insertBefore(banner, document.body.firstChild);
+        
+        // Auto-ocultar después de 10 segundos con efecto de disolución
+        setTimeout(() => {
+          const banner = document.getElementById('pwa-install-banner');
+          if (banner) {
+            banner.style.transition = 'opacity 1s ease-out';
+            banner.style.opacity = '0';
+            setTimeout(() => {
+              if (banner.parentNode) banner.remove();
+            }, 1000);
+          }
+        }, 40000);
+        
+        console.log(`PWA: Banner de instalación mostrado para ${os}`);
+      }
+
+      function dismissInstallBanner() {
+        const banner = document.getElementById('pwa-install-banner');
+        if (banner) {
+          banner.style.transition = 'opacity 0.3s ease-out';
+          banner.style.opacity = '0';
+          setTimeout(() => {
+            if (banner.parentNode) banner.remove();
+          }, 300);
+        }
+      }
+
+      function dismissInstallButton() {
+        const button = document.getElementById('pwa-install-btn');
+        if (button) {
+          button.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+          button.style.opacity = '0';
+          button.style.transform = 'scale(0.8) translateY(20px)';
+          setTimeout(() => {
+            if (button.parentNode) button.remove();
+          }, 500);
+        }
+      }
+
+      function detectOS() {
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        
+        if (/android/i.test(userAgent)) {
+          return 'Android';
+        }
+        
+        if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+          return 'iOS';
+        }
+        
+        if (/Win/.test(userAgent)) {
+          return 'Windows';
+        }
+        
+        if (/Mac/.test(userAgent)) {
+          return 'macOS';
+        }
+        
+        if (/Linux/.test(userAgent)) {
+          return 'Linux';
+        }
+        
+        return 'Dispositivo';
+      }
+
+      function showInstallButton() {
+        // Crear botón de instalación si no existe
+        if (!document.getElementById('pwa-install-btn')) {
+          const os = detectOS();
+          const installBtn = document.createElement('button');
+          installBtn.id = 'pwa-install-btn';
+          installBtn.className = 'btn btn-success position-fixed d-flex align-items-center';
+          installBtn.style.cssText = `
+            bottom: 20px; 
+            right: 20px; 
+            z-index: 1050; 
+            border-radius: 50px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+            font-size: 0.9rem;
+            font-weight: 600;
+            max-width: 200px;
+            text-align: center;
+          `;
+          
+          // Icono y texto específico por OS
+          let icon = 'fas fa-download';
+          let text = `Instalar App en ${os}`;
+          
+          if (os === 'Android') {
+            icon = 'fab fa-android';
+            text = 'Instalar App en Android';
+          } else if (os === 'iOS') {
+            icon = 'fab fa-apple';
+            text = 'Instalar App en iOS';
+          } else if (os === 'Windows') {
+            icon = 'fab fa-windows';
+            text = 'Instalar App en Windows';
+          }
+          
+          installBtn.innerHTML = `<i class="${icon} me-2"></i>${text}`;
+          installBtn.onclick = installPWA;
+          
+          // Añadir animación CSS
+          if (!document.getElementById('pwa-install-styles')) {
+            const style = document.createElement('style');
+            style.id = 'pwa-install-styles';
+            style.textContent = `
+              @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+              }
+              
+              #pwa-install-btn:hover {
+                transform: scale(1.02) !important;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.4) !important;
+              }
+              
+              @media (max-width: 768px) {
+                #pwa-install-btn {
+                  bottom: 10px !important;
+                  right: 10px !important;
+                  font-size: 0.8rem !important;
+                  padding: 10px 16px !important;
+                  max-width: 180px !important;
+                }
+              }
+            `;
+            document.head.appendChild(style);
+          }
+          
+          document.body.appendChild(installBtn);
+          installButton = installBtn;
+          
+          // Auto-ocultar el botón después de 15 segundos
+          setTimeout(() => {
+            if (installBtn && installBtn.parentNode) {
+              installBtn.style.transition = 'opacity 1s ease-out, transform 1s ease-out';
+              installBtn.style.opacity = '0';
+              installBtn.style.transform = 'scale(0.8) translateY(20px)';
+              setTimeout(() => {
+                if (installBtn.parentNode) installBtn.remove();
+              }, 1000);
+            }
+          }, 40000);
+          
+          console.log(`PWA: Botón de instalación mostrado para ${os}`);
+        }
+      }
+
+      async function installPWA() {
+        if (deferredPrompt) {
+          // Si tenemos el prompt nativo, usarlo
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log(`PWA: Usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'} la instalación`);
+          
+          if (outcome === 'accepted') {
+            dismissInstallButton();
+            dismissInstallBanner();
+          }
+          deferredPrompt = null;
+        } else {
+          // Si no hay prompt nativo, mostrar instrucciones
+          showInstallInstructions();
+        }
+      }
+
+      function showInstallInstructions() {
+        const os = detectOS();
+        let instructions = '';
+        
+        if (os === 'Android') {
+          instructions = `
+            <strong>Para instalar en Android:</strong><br>
+            1. Toca el menú (⋮) del navegador<br>
+            2. Selecciona "Instalar app" o "Añadir a pantalla de inicio"<br>
+            3. Confirma la instalación
+          `;
+        } else if (os === 'iOS') {
+          instructions = `
+            <strong>Para instalar en iOS:</strong><br>
+            1. Toca el botón de compartir (□↗)<br>
+            2. Selecciona "Añadir a pantalla de inicio"<br>
+            3. Toca "Añadir"
+          `;
+        } else if (os === 'Windows') {
+          instructions = `
+            <strong>Para instalar en Windows:</strong><br>
+            1. Busca el icono de instalación (⊕) en la barra de direcciones<br>
+            2. O usa Ctrl+Shift+I para abrir herramientas<br>
+            3. Ve a Application > Manifest > Install
+          `;
+        } else {
+          instructions = `
+            <strong>Para instalar la app:</strong><br>
+            1. Busca la opción "Instalar" en el menú del navegador<br>
+            2. O añade esta página a favoritos/marcadores<br>
+            3. Úsala como una app desde tu escritorio
+          `;
+        }
+        
+        // Crear modal con instrucciones
+        const modal = document.createElement('div');
+        modal.className = 'modal fade show';
+        modal.style.cssText = 'display: block; background: rgba(0,0,0,0.5);';
+        modal.innerHTML = `
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                  <i class="fas fa-desktop me-2"></i>¡Instala la App en tu ${os}!
+                </h5>
+                <button type="button" class="btn-close btn-close-white" onclick="this.closest('.modal').remove()"></button>
+              </div>
+              <div class="modal-body">
+                <div class="text-center mb-4">
+                  <i class="fas fa-magic text-success" style="font-size: 3rem;"></i>
+                  <h6 class="mt-2 text-success">¡Tendrás un icono en tu escritorio!</h6>
+                </div>
+                
+                <div class="alert alert-success">
+                  <i class="fas fa-star me-2"></i>
+                  <strong>Beneficios de instalar:</strong>
+                  <ul class="mb-0 mt-2">
+                    <li>Acceso directo desde escritorio/pantalla de inicio</li>
+                    <li>Funciona sin conexión a internet</li>
+                    <li>Experiencia como app nativa</li>
+                    <li>Notificaciones push (próximamente)</li>
+                  </ul>
+                </div>
+                
+                <div class="border rounded p-3 bg-light">
+                  <h6><i class="fas fa-info-circle text-primary me-2"></i>Instrucciones para ${os}:</h6>
+                  <div>${instructions}</div>
+                </div>
+              </div>
+              <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" onclick="this.closest('.modal').remove()">
+                  Ahora no
+                </button>
+                <button type="button" class="btn btn-success btn-lg" onclick="tryInstallFromModal(this)">
+                  <i class="fas fa-download me-2"></i>¡Instalar Ahora!
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Auto-cerrar después de 20 segundos (más tiempo por el contenido adicional)
+        setTimeout(() => {
+          if (modal.parentNode) modal.remove();
+        }, 20000);
+      }
+
+      function tryInstallFromModal(button) {
+        const modal = button.closest('.modal');
+        
+        if (deferredPrompt) {
+          // Si tenemos el prompt nativo, usarlo
+          console.log('PWA: Intentando instalación automática desde modal');
+          button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Instalando...';
+          button.disabled = true;
+          
+          deferredPrompt.prompt().then(() => {
+            return deferredPrompt.userChoice;
+          }).then((result) => {
+            console.log('PWA: Resultado de instalación:', result.outcome);
+            if (result.outcome === 'accepted') {
+              // Cerrar modal y mostrar éxito
+              modal.remove();
+              dismissInstallButton();
+              dismissInstallBanner();
+              
+              // Mostrar mensaje de éxito
+              showInstallSuccessMessage();
+            } else {
+              // Usuario rechazó, restaurar botón
+              button.innerHTML = '<i class="fas fa-download me-2"></i>¡Instalar Ahora!';
+              button.disabled = false;
+            }
+            deferredPrompt = null;
+          }).catch((error) => {
+            console.error('PWA: Error en instalación:', error);
+            button.innerHTML = '<i class="fas fa-download me-2"></i>¡Instalar Ahora!';
+            button.disabled = false;
+          });
+        } else {
+          // No hay prompt automático, mantener instrucciones
+          console.log('PWA: No hay prompt automático disponible, mostrando instrucciones');
+          const instructionsDiv = modal.querySelector('.border.rounded');
+          instructionsDiv.classList.add('border-warning');
+          instructionsDiv.classList.remove('bg-light');
+          instructionsDiv.classList.add('bg-warning');
+          instructionsDiv.style.animation = 'pulse 1s ease-in-out 3';
+          
+          // Cambiar el botón para indicar que siga las instrucciones
+          button.innerHTML = '<i class="fas fa-hand-point-up me-2"></i>Sigue las instrucciones arriba';
+          button.classList.remove('btn-success');
+          button.classList.add('btn-warning');
+        }
+      }
+
+      function showInstallSuccessMessage() {
+        const successModal = document.createElement('div');
+        successModal.className = 'modal fade show';
+        successModal.style.cssText = 'display: block; background: rgba(0,0,0,0.5);';
+        successModal.innerHTML = `
+          <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+              <div class="modal-body text-center p-4">
+                <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                <h5 class="mt-3 text-success">¡Instalación Exitosa!</h5>
+                <p class="text-muted">La app ya está disponible en tu escritorio</p>
+                <button type="button" class="btn btn-success" onclick="this.closest('.modal').remove()">
+                  ¡Genial!
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(successModal);
+        
+        // Auto-cerrar después de 5 segundos
+        setTimeout(() => {
+          if (successModal.parentNode) successModal.remove();
+        }, 5000);
+      }
+
+      // Detectar cuando la app se instala
+      window.addEventListener('appinstalled', (evt) => {
+        console.log('PWA: App instalada exitosamente');
+        
+        // Ocultar elementos de instalación
+        dismissInstallButton();
+        dismissInstallBanner();
+        
+        // Mostrar mensaje de éxito
+        const successBanner = document.createElement('div');
+        successBanner.className = 'alert alert-success position-fixed w-100';
+        successBanner.style.cssText = `
+          top: 0;
+          left: 0;
+          z-index: 1060;
+          margin: 0;
+          border-radius: 0;
+          text-align: center;
+          background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        `;
+        successBanner.innerHTML = `
+          <i class="fas fa-check-circle me-2"></i>
+          <strong>¡App instalada exitosamente!</strong> Ya puedes acceder desde tu escritorio o pantalla de inicio.
+        `;
+        
+        document.body.insertBefore(successBanner, document.body.firstChild);
+        
+        // Auto-ocultar después de 5 segundos
+        setTimeout(() => {
+          successBanner.style.transition = 'opacity 1s ease-out';
+          successBanner.style.opacity = '0';
+          setTimeout(() => successBanner.remove(), 1000);
+        }, 5000);
+      });
+
+      // Detectar si ya está ejecutándose como PWA
+      function isPWA() {
+        // Método 1: Display mode standalone
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+          return true;
+        }
+        
+        // Método 2: iOS Safari standalone
+        if (window.navigator.standalone === true) {
+          return true;
+        }
+        
+        // Método 3: Detectar si viene de una app instalada
+        if (document.referrer.startsWith('android-app://')) {
+          return true;
+        }
+        
+        // Método 4: User agent contiene información de app instalada
+        const userAgent = navigator.userAgent || '';
+        if (userAgent.includes('wv') && userAgent.includes('Version/')) {
+          return true; // WebView en Android
+        }
+        
+        // Método 5: Verificar si el viewport es de app móvil
+        if (window.outerWidth === window.innerWidth && window.outerHeight === window.innerHeight) {
+          // Podría ser una app instalada en móvil
+          return window.matchMedia('(display-mode: fullscreen)').matches;
+        }
+        
+        return false;
+      }
+
+      // Añadir clase CSS si es PWA
+      if (isPWA()) {
+        document.documentElement.classList.add('pwa-mode');
+        console.log('PWA: Ejecutándose como aplicación instalada');
+      }
+
+      // Manejar orientación en dispositivos móviles
+      if (screen.orientation) {
+        screen.orientation.addEventListener('change', () => {
+          console.log('PWA: Orientación cambiada a:', screen.orientation.angle);
+        });
+      }
+    </script>
+
+    <script>
+      // Función para forzar el colapso del menú hamburguesa
+      function collapseMobileNav() {
+        const mobileNav = document.getElementById('mobileNav');
+        if (mobileNav && mobileNav.classList.contains('show')) {
+          console.log('Colapsando mobileNav');
+          const collapseInstance = bootstrap.Collapse.getInstance(mobileNav) || new bootstrap.Collapse(mobileNav, { toggle: false });
+          collapseInstance.hide();
+        } else {
+          console.log('mobileNav no encontrado o no visible:', mobileNav);
+        }
+      }
+
+      // Cerrar el menú al iniciar cualquier solicitud HTMX
+      document.addEventListener("htmx:beforeRequest", function (event) {
+        console.log('htmx:beforeRequest disparado', event.detail.elt);
+        collapseMobileNav();
+      });
+
+      // Añadir listener de click a los links del menú móvil
+      document.addEventListener('DOMContentLoaded', function () {
+        const mobileNavLinks = document.querySelectorAll('#mobileNav .nav-link');
+        mobileNavLinks.forEach(link => {
+          link.addEventListener('click', () => {
+            console.log('Clic en nav-link:', link.textContent);
+            collapseMobileNav();
+          });
+        });
+      });
+
+      // Countdown simple para 3 segundos
+      let timeLeft = 3;
+      const countdownText = document.getElementById('countdown-text');
+      
+      const updateCountdown = () => {
+        if (countdownText) {
+          if (timeLeft > 0) {
+            countdownText.textContent = `${timeLeft} segundo${timeLeft > 1 ? 's' : ''} restante${timeLeft > 1 ? 's' : ''}`;
+            timeLeft--;
+          } else {
+            countdownText.textContent = 'Cargando contenido...';
+          }
+        }
+      };
+      
+      // Actualizar inmediatamente y luego cada segundo
+      updateCountdown();
+      const countdownInterval = setInterval(updateCountdown, 1000);
+      
+      // Limpiar interval cuando se carga el contenido
+      document.addEventListener('htmx:afterSettle', function(event) {
+        if (event.detail.target.id === 'main-content') {
+          clearInterval(countdownInterval);
+        }
+      });
+
+      // Ocultar indicador de carga y mostrar menú cuando se complete la carga del contenido
+      document.addEventListener('htmx:afterSettle', function(event) {
+        if (event.detail.target.id === 'main-content') {
+          clearInterval(countdownInterval);
+          
+          const loadingIndicator = document.getElementById('loading-indicator');
+          if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+          }
+          
+          // Mostrar el menú cuando se carga el contenido de autenticación
+          const navbarContainer = document.getElementById('navbar-container');
+          if (navbarContainer) {
+            navbarContainer.style.display = 'block';
+          }
+        }
+      });
+
+      // Re-inicializar Bootstrap collapse después de HTMX settle
+      document.addEventListener("htmx:afterSettle", function (event) {
+        
+        console.log('htmx:afterSettle disparado');
+        const collapses = document.querySelectorAll('[data-bs-toggle="collapse"]');
+        collapses.forEach((el) => {
+          if (!bootstrap.Collapse.getInstance(el)) {
+            console.log('Reinicializando collapse para:', el);
+            new bootstrap.Collapse(el, { toggle: false });
+          }
+        });
+      });
+
+      // Re-inicializar en onLoad para contenido nuevo
+      htmx.onLoad(function (content) {
+        console.log('htmx:onLoad disparado');
+        const collapses = content.querySelectorAll('[data-bs-toggle="collapse"]');
+        collapses.forEach((el) => {
+          if (!bootstrap.Collapse.getInstance(el)) {
+            console.log('Reinicializando collapse en onLoad para:', el);
+            new bootstrap.Collapse(el, { toggle: false });
+          }
+        });
+      });
+
+      // Cambiar título dinámicamente
+      function setPageTitle(title) {
+        document.getElementById("page-title").textContent = title;
+        document.title = title;
+      }
+
+      // Reinicializar Alpine.js después de HTMX
+      document.addEventListener("htmx:afterSwap", function (event) {
+        if (window.Alpine) {
+          Alpine.initTree(event.detail.target);
+        }
+      });
+
+      // Listener de scroll para transparencia del navbar
+      window.addEventListener("scroll", function () {
+        const navbar = document.querySelector(".navbar");
+        if (navbar) {
+          if (window.scrollY > 150) {
+            navbar.classList.add("navbar-transparent");
+            navbar.classList.remove("navbar-opaque");
+          } else {
+            navbar.classList.add("navbar-opaque");
+            navbar.classList.remove("navbar-transparent");
+          }
+        }
+      });
+
+      // === BARRA DE HERRAMIENTAS EN GALERÍA ===
+      function addGalleryNavbarRow(isMyPhotos = false) {
+        const navbarContainer = document.getElementById('navbar-container');
+        const nav = navbarContainer.querySelector('nav.navbar');
+        if (!navbarContainer || !nav) {
+          console.log('Esperando navbar-container o nav...');
+          setTimeout(() => addGalleryNavbarRow(isMyPhotos), 100);
+          return;
+        }
+
+        removeGalleryNavbarRow();
+
+        const row = document.createElement('div');
+        row.id = 'gallery-navbar-row';
+        row.className = 'container-fluid d-flex align-items-center';
+        row.style.padding = '8px 0';
+        row.style.backgroundColor = 'rgb(0, 0, 0)';
+        row.style.borderBottom = '1px solid rgba(255, 255, 255, 0.1)';
+        row.style.margin = '0';
+        row.style.top = `${nav.offsetHeight+16}px`;
+        row.style.justifyContent = 'space-between';
+        row.style.minHeight = '150px';
+        
+
+        const searchHxGet = isMyPhotos ? "/api/buscar-mis-fotos-persona" : "/api/buscar-fotos-persona";
+        const verTodasHxGet = isMyPhotos ? "/ver-mis-fotos" : "/ver-todas-fotos";
+
+        row.innerHTML = `
+          <!-- Izquierda: buscador + botón ver todas -->
+          <div class="d-flex align-items-center gap-2" >
+            <!-- Input con spinner -->
+            <div class="d-flex align-items-center" style="position: relative; flex: 1;">
+              <input type="text" 
+                     class="form-control form-control-sm" 
+                     name="buscar_persona"
+                     placeholder="Buscar por persona..."
+                     style="width: 100%;"
+                     hx-get="${searchHxGet}"
+                     hx-trigger="keyup changed delay:1200ms"
+                     hx-target="#panel-content"
+                     hx-swap="innerHTML"
+                     hx-indicator="#search-spinner">
+              <div id="search-spinner" class="htmx-indicator position-absolute" style="top: 50%; right: 8px; transform: translateY(-50%);">
+                <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+              </div>
+            </div>
+
+            <!-- Botón Ver todas -->
+            <button class="btn btn-outline-light btn-sm d-flex align-items-center"
+                    hx-get="${verTodasHxGet}"
+                    hx-target="#panel-content"
+                    hx-swap="innerHTML">
+              <i class="fas fa-redo me-1"></i>Ver todas
+            </button>
+          </div>
+
+          <!-- Derecha: botones de acción -->
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary btn-sm d-flex align-items-center" onclick="subirFoto()">
+              <i class="fas fa-plus me-1"></i>Subir Foto
+            </button>
+            <button class="btn btn-success btn-sm d-flex align-items-center" onclick="downloadSelected()">
+              <i class="fas fa-download me-1"></i>Descargar Marcados
+            </button>
+            <button class="btn btn-danger btn-sm d-flex align-items-center" onclick="borradoDeMarcados()">
+              <i class="fas fa-trash me-1"></i>Borrar Marcados
+            </button>
+            <button class="btn btn-outline-light btn-sm d-flex align-items-center" onclick="desmarcarTodo()">
+              <i class="fas fa-times me-1"></i>Desmarcar Todo
+            </button>
+          </div>
+        `;
+
+        nav.insertAdjacentElement('afterend', row);
+        htmx.process(row);
+
+        // Ajustar margen del contenido principal
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+          const navbarHeight = nav.offsetHeight + row.offsetHeight;
+          mainContent.style.marginTop = `${navbarHeight}px`;
+        }
+
+        // Actualizar posición dinámicamente al redimensionar
+        window.addEventListener('resize', () => {
+          row.style.top = `${nav.offsetHeight}px`;
+          const updatedHeight = nav.offsetHeight + row.offsetHeight;
+          mainContent.style.marginTop = `${updatedHeight}px`;
+        });
+      }
+
+      function removeGalleryNavbarRow() {
+        const row = document.getElementById('gallery-navbar-row');
+        if (row) {
+          row.remove();
+        }
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+          mainContent.style.marginTop = '56px'; // Altura base del navbar
+        }
+      }
+
+      // === FUNCIONES AUXILIARES ===
+      function desmarcarTodo() {
+        document.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => cb.checked = false);
+      }
+
+      function subirFoto() {
+        htmx.ajax('GET', '/subir_foto', { target: '#panel-content', swap: 'innerHTML' });
+      }
+
+      function obtenerFotosSeleccionadas() {
+        return document.querySelectorAll('input.form-check-input[data-photo-id]:checked');
+      }
+
+      function downloadSelected() {
+        const checkboxes = obtenerFotosSeleccionadas();
+        if (checkboxes.length === 0) {
+          mostrarModal('Advertencia', 'Selecciona al menos una foto.', 'warning');
+          return;
+        }
+
+        const fotos = Array.from(checkboxes).map(cb => {
+          const card = cb.closest('.card');
+          const img = card.querySelector('img');
+          const title = card.querySelector('.card-title').textContent.trim();
+          const date = card.querySelector('.badge').textContent.trim();
+          return { 
+            url: img.src, 
+            name: title, 
+            fileName: `${title}_${date.replace('/', '-')}.jpg` 
+          };
+        });
+
+        mostrarModalDescarga(fotos);
+      }
+
+      function mostrarModalDescarga(fotos) {
+        const modalId = 'downloadModal';
+        let old = document.getElementById(modalId);
+        if (old) old.remove();
+
+        const modal = document.createElement('div');
+        modal.id = modalId;
+        modal.className = 'modal fade show';
+        modal.style.display = 'block';
+        modal.innerHTML = `
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-download text-success"></i> Descargando...</h5>
+              </div>
+              <div class="modal-body">
+                <div class="progress mb-3"><div class="progress-bar" id="prog-bar" style="width:0%"></div></div>
+                <div class="text-center text-muted mb-3" id="prog-text">0 de ${fotos.length}</div>
+                <div id="download-list" style="max-height:300px; overflow-y:auto;">
+                  ${fotos.map((f, i) => `
+                    <div class="d-flex align-items-center p-2 border rounded mb-2" id="item-${i}">
+                      <div class="spinner-border spinner-border-sm me-2" id="spin-${i}"></div>
+                      <span>${f.name}</span>
+                      <span class="ms-auto text-success" id="status-${i}">Esperando...</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-success" id="btn-done" style="display:none" onclick="cerrarModalDescarga()">Hecho</button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        iniciarDescargaAutomatica(fotos, modal);
+      }
+
+      async function iniciarDescargaAutomatica(fotos, modal) {
+        let done = 0;
+        for (let i = 0; i < fotos.length; i++) {
+          const f = fotos[i];
+          document.getElementById(`status-${i}`).textContent = 'Descargando...';
+          try {
+            const response = await fetch(f.url, {
+              method: 'GET',
+              mode: 'cors',
+              cache: 'no-store'
+            });
+            if (!response.ok) throw new Error('Network response was not ok');
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = f.fileName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            done++;
+          } catch (e) {
+            console.error('Error descargando:', e);
+            document.getElementById(`status-${i}`).textContent = 'Error';
+          } finally {
+            const p = (done / fotos.length) * 100;
+            document.getElementById('prog-bar').style.width = p + '%';
+            document.getElementById('prog-text').textContent = `${done} de ${fotos.length}`;
+            document.getElementById(`spin-${i}`).outerHTML = '<i class="fas fa-check text-success me-2"></i>';
+            document.getElementById(`status-${i}`).textContent = document.getElementById(`status-${i}`).textContent === 'Error' ? 'Error' : 'OK';
+            if (done === fotos.length) {
+              document.querySelector('.modal-title').innerHTML = '<i class="fas fa-check text-success"></i> ¡Completado!';
+              document.getElementById('btn-done').style.display = 'block';
+            }
+          }
+          await new Promise(resolve => setTimeout(resolve, 600));
+        }
+      }
+
+      function cerrarModalDescarga() {
+        const m = document.getElementById('downloadModal');
+        if (m) m.remove();
+      }
+
+      function borradoDeMarcados() {
+        const checkboxes = obtenerFotosSeleccionadas();
+        if (checkboxes.length === 0) {
+          mostrarModal('Advertencia', 'Selecciona al menos una foto.', 'warning');
+          return;
+        }
+
+        const currentUser = checkboxes[0].dataset.currentUser;
+        const propias = [];
+        const ajenas = [];
+
+        checkboxes.forEach(cb => {
+          (cb.dataset.photoUser === currentUser ? propias : ajenas).push(cb.dataset.photoId);
+        });
+
+        if (ajenas.length > 0 && propias.length === 0) {
+          mostrarModal('Error', 'No puedes borrar fotos de otros usuarios.', 'danger');
+          return;
+        }
+
+        const msg = ajenas.length > 0
+          ? `Se borrarán ${propias.length} foto${propias.length !== 1 ? 's' : ''} propias. Las de otros no se pueden borrar.`
+          : `¿Borrar ${propias.length} foto${propias.length !== 1 ? 's' : ''}?`;
+
+        mostrarModal('Confirmar', msg, 'danger', () => borrarFotos(propias));
+      }
+
+      async function borrarFotos(ids) {
+        const res = await fetch('/api/borrar-fotos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ foto_ids: ids })
+        });
+        const data = await res.json();
+        if (data.success) {
+          mostrarModal('Éxito', `${data.deleted_count} foto${data.deleted_count !== 1 ? 's' : ''} borradas.`, 'success', () => {
+            // Determinar la galería actual basándose en el contenido del panel
+            const panelContent = document.getElementById('panel-content');
+            const currentContent = panelContent ? panelContent.innerHTML : '';
+            
+            if (currentContent.includes('Mis Fotos') || currentContent.includes('mis-fotos-container')) {
+              htmx.ajax('GET', '/ver-mis-fotos', { target: '#panel-content', swap: 'innerHTML' });
+            } else if (currentContent.includes('Fotos Recién Subidas') || currentContent.includes('Galería de Fotos Recién Subidas')) {
+              htmx.ajax('GET', '/ver-todas-fotos', { target: '#panel-content', swap: 'innerHTML' });
+            } else if (currentContent.includes('Todas las Fotos') || currentContent.includes('Galería de Todas las Fotos')) {
+              htmx.ajax('GET', '/ver-todas-fotos', { target: '#panel-content', swap: 'innerHTML' });
+            } else {
+              // Como último recurso, ir al selector de fotos
+              htmx.ajax('GET', '/selector_fotos', { target: '#panel-content', swap: 'innerHTML' });
+            }
+          });
+        } else {
+          mostrarModal('Error', data.message || 'Error al borrar.', 'error');
+        }
+      }
+
+      function mostrarModal(title, body, type, callback = null) {
+        const id = 'dynamicModal';
+        document.getElementById(id)?.remove();
+
+        const types = {
+          info: 'text-info',
+          warning: 'text-warning',
+          danger: 'text-danger',
+          success: 'text-success',
+          error: 'text-danger'
+        };
+
+        const modal = document.createElement('div');
+        modal.id = id;
+        modal.className = 'modal fade show';
+        modal.style.display = 'block';
+        modal.innerHTML = `
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-exclamation-circle ${types[type]}"></i> ${title}</h5>
+                <button class="btn-close" onclick="this.closest('.modal').remove()"></button>
+              </div>
+              <div class="modal-body">${body}</div>
+              <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancelar</button>
+                ${callback ? `<button class="btn btn-${type}" onclick="ejecutarCallback()">Aceptar</button>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+
+        if (callback) {
+          window.ejecutarCallback = () => {
+            callback();
+            modal.remove();
+            delete window.ejecutarCallback;
+          };
+        }
+      }
+
+      // === GLOBAL HTMX EVENT LISTENERS FOR NAVBAR ===
+      document.addEventListener('htmx:afterSettle', function (e) {
+        if (e.detail.target.id === 'panel-content') {
+          const isMyPhotosView = e.detail.target.querySelector('#mis-fotos-container');
+          const isAllPhotosView = e.detail.target.querySelector('#fotos-grid');
+          if (isMyPhotosView || isAllPhotosView) {
+            const isMyPhotos = !!isMyPhotosView;
+            addGalleryNavbarRow(isMyPhotos);
+          } else {
+            removeGalleryNavbarRow();
+          }
+        }
+      });
+
+      document.addEventListener('htmx:beforeRequest', function (e) {
+        const targetElement = e.detail.elt;
+        if (targetElement && targetElement.closest('.navbar a[hx-get]')) {
+          const href = targetElement.getAttribute('hx-get');
+          if (!href.includes('/ver-mis-fotos') && !href.includes('/ver-todas-fotos') && !href.includes('/api/buscar-mis-fotos-persona') && !href.includes('/api/buscar-fotos-persona')) {
+            removeGalleryNavbarRow();
+          }
+        }
+      });
+
+      document.addEventListener('DOMContentLoaded', function () {
+        const isMyPhotosView = document.getElementById('mis-fotos-container');
+        const isAllPhotosView = document.getElementById('fotos-grid');
+        if (isMyPhotosView || isAllPhotosView) {
+          const isMyPhotos = !!isMyPhotosView;
+          addGalleryNavbarRow(isMyPhotos);
+        }
+      });
+    </script>
+
+    <!-- Modal global para ver fotos en grande -->
+    <div id="photoModal" class="photo-modal" style="display: none;">
+      <div class="photo-modal-backdrop" onclick="closePhotoModal()"></div>
+      <div class="photo-modal-content">
+        <div class="photo-modal-header">
+          <h5 id="photoModalTitle">Foto</h5>
+          <button type="button" class="photo-modal-close" onclick="closePhotoModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="photo-modal-body">
+          <button class="photo-nav-button prev" onclick="showPreviousPhoto()" aria-label="Foto anterior">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <img id="photoModalImage" src="" alt="" class="photo-modal-image" onclick="closePhotoModal()"/>
+          <button class="photo-nav-button next" onclick="showNextPhoto()" aria-label="Siguiente foto">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+        <div class="photo-modal-footer">
+          <small class="text-muted" id="photoModalInfo"></small>
+          <button class="btn btn-primary" onclick="downloadPhoto(document.getElementById('photoModalImage').src, document.getElementById('photoModalTitle').textContent)">
+            <i class="fas fa-download me-2"></i>Descargar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Funciones globales para el modal de fotos
+      function openPhotoModal(src, title, user, date, photoCardId) {
+        const modal = document.getElementById('photoModal');
+        const modalImage = document.getElementById('photoModalImage');
+        const modalTitle = document.getElementById('photoModalTitle');
+        const modalInfo = document.getElementById('photoModalInfo');
+        
+        if (!modal || !modalImage || !modalTitle || !modalInfo) {
+          console.error('Elementos del modal no encontrados');
+          return;
+        }
+
+        // Actualizar contenido del modal
+        modalImage.src = src;
+        modalImage.alt = title;
+        modalTitle.textContent = title;
+        modalInfo.textContent = `Subido por ${user} el ${date}`;
+
+        // Mostrar el modal
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('show'), 10);
+
+        // Reducir opacidad del navbar
+        const navbar = document.querySelector('.navbar');
+        const controls = document.querySelector('.fixed-top-controls');
+        if (navbar) navbar.style.opacity = '0';
+        if (controls) controls.style.opacity = '0';
+        const navbarContainer = document.getElementById('navbar-container');
+        const mainNavbar = document.getElementById('main-navbar');
+        if (navbarContainer) navbarContainer.style.opacity = '0';
+        if (mainNavbar) mainNavbar.style.opacity = '0';
+
+        // Guardar el ID de la tarjeta actual
+        modal.dataset.currentPhotoCardId = photoCardId;
+
+        // Actualizar estado de los botones
+        updateNavButtons();
+      }
+
+      function closePhotoModal() {
+        const modal = document.getElementById('photoModal');
+        if (!modal) return;
+        
+        modal.classList.remove('show');
+        
+        // Restaurar opacidad del navbar
+        const navbar = document.querySelector('.navbar');
+        const controls = document.querySelector('.fixed-top-controls');
+        if (navbar) navbar.style.opacity = '1';
+        if (controls) controls.style.opacity = '1';
+        const navbarContainer = document.getElementById('navbar-container');
+        const mainNavbar = document.getElementById('main-navbar');
+        if (navbarContainer) navbarContainer.style.opacity = '1';
+        if (mainNavbar) mainNavbar.style.opacity = '1';
+        
+        setTimeout(() => {
+          modal.style.display = 'none';
+          // Limpiar el dataset
+          delete modal.dataset.currentPhotoCardId;
+        }, 300);
+      }
+
+      function updateNavButtons() {
+        const modal = document.getElementById('photoModal');
+        const currentPhotoCardId = modal.dataset.currentPhotoCardId;
+        const photoCards = Array.from(document.querySelectorAll('#fotos-grid > div'));
+        const currentIndex = photoCards.findIndex(card => card.id === currentPhotoCardId);
+        
+        const prevBtn = document.querySelector('.photo-nav-button.prev');
+        const nextBtn = document.querySelector('.photo-nav-button.next');
+        
+        if (prevBtn) prevBtn.disabled = currentIndex <= 0;
+        if (nextBtn) nextBtn.disabled = currentIndex >= photoCards.length - 1;
+      }
+
+      function showPreviousPhoto() {
+        const modal = document.getElementById('photoModal');
+        const currentPhotoCardId = modal.dataset.currentPhotoCardId;
+        const photoCards = Array.from(document.querySelectorAll('#fotos-grid > div'));
+        const currentIndex = photoCards.findIndex(card => card.id === currentPhotoCardId);
+
+        if (currentIndex > 0) {
+          const prevCard = photoCards[currentIndex - 1];
+          const img = prevCard.querySelector('img');
+          const title = prevCard.dataset.fotoNombre || img.alt || 'Sin título';
+          
+          // Buscar información del usuario y fecha
+          const userElement = prevCard.querySelector('small') || prevCard.querySelector('.text-muted');
+          const dateElement = prevCard.querySelector('.badge');
+          
+          const user = userElement ? userElement.textContent.replace(/^Subido por\s+/i, '') || 'Desconocido' : 'Desconocido';
+          const date = dateElement ? dateElement.textContent || 'Sin fecha' : 'Sin fecha';
+
+          document.getElementById('photoModalImage').src = img.src;
+          document.getElementById('photoModalImage').alt = title;
+          document.getElementById('photoModalTitle').textContent = title;
+          document.getElementById('photoModalInfo').textContent = `Subido por ${user} el ${date}`;
+          modal.dataset.currentPhotoCardId = prevCard.id;
+
+          updateNavButtons();
+        }
+      }
+
+      function showNextPhoto() {
+        const modal = document.getElementById('photoModal');
+        const currentPhotoCardId = modal.dataset.currentPhotoCardId;
+        const photoCards = Array.from(document.querySelectorAll('#fotos-grid > div'));
+        const currentIndex = photoCards.findIndex(card => card.id === currentPhotoCardId);
+
+        if (currentIndex < photoCards.length - 1) {
+          const nextCard = photoCards[currentIndex + 1];
+          const img = nextCard.querySelector('img');
+          const title = nextCard.dataset.fotoNombre || img.alt || 'Sin título';
+          
+          // Buscar información del usuario y fecha
+          const userElement = nextCard.querySelector('small') || nextCard.querySelector('.text-muted');
+          const dateElement = nextCard.querySelector('.badge');
+          
+          const user = userElement ? userElement.textContent.replace(/^Subido por\s+/i, '') || 'Desconocido' : 'Desconocido';
+          const date = dateElement ? dateElement.textContent || 'Sin fecha' : 'Sin fecha';
+
+          document.getElementById('photoModalImage').src = img.src;
+          document.getElementById('photoModalImage').alt = title;
+          document.getElementById('photoModalTitle').textContent = title;
+          document.getElementById('photoModalInfo').textContent = `Subido por ${user} el ${date}`;
+          modal.dataset.currentPhotoCardId = nextCard.id;
+
+          updateNavButtons();
+        }
+      }
+
+      function downloadPhoto(src, filename) {
+        const link = document.createElement('a');
+        link.href = src;
+        link.download = filename || 'foto.jpg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      // Atajos de teclado para el modal
+      document.addEventListener('keydown', function(event) {
+        const modal = document.getElementById('photoModal');
+        if (modal && modal.style.display === 'flex') {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            closePhotoModal();
+          } else if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            showPreviousPhoto();
+          } else if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            showNextPhoto();
+          }
+        }
+      });
+    </script>
+
+  </body>
+</html>

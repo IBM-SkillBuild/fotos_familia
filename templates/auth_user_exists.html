@@ -1,0 +1,34 @@
+<!-- Usuario ya existe -->
+<div class="card shadow-lg" style="
+    max-width: 400px;
+    border: none;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95);
+">
+    <div class="card-header bg-warning text-dark text-center" style="border-radius: 15px 15px 0 0;">
+        <h5 class="mb-0">⚠️ Usuario Ya Existe</h5>
+    </div>
+    
+    <div class="card-body p-4 text-center">
+        <p class="mb-4">Ya existe una cuenta con el email:</p>
+        <p class="fw-bold text-primary mb-4">{{ email }}</p>
+        
+        <div class="d-grid gap-3">
+            <button class="btn btn-primary btn-lg" 
+                    hx-get="/auth-login-form" 
+                    hx-target="#auth-container" 
+                    hx-swap="innerHTML"
+                    style="border-radius: 10px; font-weight: bold;">
+                🔑 Iniciar Sesión
+            </button>
+            <button class="btn btn-outline-secondary" 
+                    hx-get="/auth-register-form" 
+                    hx-target="#auth-container" 
+                    hx-swap="innerHTML"
+                    style="border-radius: 10px;">
+                ✏️ Intentar Otro Email
+            </button>
+        </div>
+    </div>
+</div>

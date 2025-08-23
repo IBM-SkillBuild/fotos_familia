@@ -1,0 +1,21 @@
+    <link
+      href="{{ url_for('static', filename='css/dark-theme-fixes.css') }}"
+      rel="stylesheet"
+    />
+
+<div class="card shadow-sm mx-auto" style="max-width: 70%; margin-top: 3em; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2);">
+    <div class="card-header bg-danger text-white">
+        <h4 class="mb-0">Error</h4>
+    </div>
+    <div class="card-body">
+        <p class="mb-3" style="color: white;">La respuesta ingresada es incorrecta. Por favor, intenta de nuevo.</p>
+        <hr>
+        <button class="btn btn-secondary w-100" 
+        hx-get="/selector_fotos"
+        hx-target="#panel-content"
+        hx-swap="innerHTML"
+        style="cursor: pointer">
+            <i class="fas fa-redo me-1"></i> Intentar de Nuevo
+        </button>
+    </div>
+</div>

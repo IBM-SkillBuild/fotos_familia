@@ -1,0 +1,252 @@
+<!-- Página de Eliminar Cuenta -->
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-10 mx-auto">
+      <div class="card border-danger">
+        <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">🗑️ Eliminar Cuenta Permanentemente</h4>
+          <button class="btn btn-outline-light" 
+                  hx-get="/profile-content" 
+                  hx-target="#panel-content" 
+                  hx-swap="innerHTML">
+            ← Volver al Perfil
+          </button>
+        </div>
+        
+        <div class="card-body">
+          <!-- Advertencia Principal -->
+          <div class="alert alert-danger border-0 shadow-sm mb-4">
+            <div class="d-flex align-items-center mb-3">
+              <div class="me-3 fs-1">⚠️</div>
+              <div>
+                <h5 class="alert-heading mb-1">¡ATENCIÓN! Esta acción es irreversible</h5>
+                <p class="mb-0">Al eliminar tu cuenta, se borrará permanentemente toda tu información.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <!-- Columna izquierda: Información que se eliminará -->
+            <div class="col-md-6">
+              <h5 class="text-danger mb-4">📋 ¿Qué se eliminará?</h5>
+              
+              <div class="list-group list-group-flush">
+                <div class="list-group-item border-0 px-0">
+                  <div class="d-flex align-items-center">
+                    <span class="text-danger me-3 fs-5">❌</span>
+                    <div>
+                      <strong>Información personal</strong>
+                      <div class="text-muted small">{{ user.name }} ({{ user.email }})</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="list-group-item border-0 px-0">
+                  <div class="d-flex align-items-center">
+                    <span class="text-danger me-3 fs-5">❌</span>
+                    <div>
+                      <strong>Cuenta activa</strong>
+                      <div class="text-muted small">{{ stats.days_active }} días de actividad</div>
+                    </div>
+                  </div>
+                </div>
+                
+                {% if stats.has_phone %}
+                <div class="list-group-item border-0 px-0">
+                  <div class="d-flex align-items-center">
+                    <span class="text-danger me-3 fs-5">❌</span>
+                    <div>
+                      <strong>Teléfono registrado</strong>
+                      <div class="text-muted small">{{ user.phone }}</div>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+                
+                <div class="list-group-item border-0 px-0">
+                  <div class="d-flex align-items-center">
+                    <span class="text-danger me-3 fs-5">❌</span>
+                    <div>
+                      <strong>Historial completo</strong>
+                      <div class="text-muted small">Todos los logs y actividad registrada</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="list-group-item border-0 px-0">
+                  <div class="d-flex align-items-center">
+                    <span class="text-danger me-3 fs-5">❌</span>
+                    <div>
+                      <strong>Configuraciones</strong>
+                      <div class="text-muted small">Todas las preferencias guardadas</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Columna derecha: Proceso y política -->
+            <div class="col-md-6">
+              <h5 class="text-info mb-4">🔒 Política de datos</h5>
+              
+              <div class="alert alert-info border-0 shadow-sm mb-4">
+                <h6 class="alert-heading">📝 Compromiso de privacidad</h6>
+                <p class="mb-2"><strong>No guardamos ningún dato</strong> después de eliminar tu cuenta.</p>
+                <ul class="mb-0 small">
+                  <li>La eliminación es completa e inmediata</li>
+                  <li>No mantenemos copias de respaldo</li>
+                  <li>No vendemos ni compartimos información</li>
+                  <li>Cumplimos con regulaciones de privacidad</li>
+                </ul>
+              </div>
+              
+              <h6 class="text-warning mb-3">⚡ Proceso de eliminación:</h6>
+              <ol class="list-group list-group-numbered list-group-flush">
+                <li class="list-group-item border-0 px-0">
+                  <strong>Verificación:</strong> Confirmas tu identidad
+                </li>
+                <li class="list-group-item border-0 px-0">
+                  <strong>Cierre de sesión:</strong> Se termina tu sesión actual
+                </li>
+                <li class="list-group-item border-0 px-0">
+                  <strong>Eliminación:</strong> Se borran todos tus datos
+                </li>
+                <li class="list-group-item border-0 px-0">
+                  <strong>Redirección:</strong> Vuelves a la página de inicio
+                </li>
+              </ol>
+            </div>
+          </div>
+          
+          <hr class="my-4">
+          
+          <!-- Formulario de confirmación -->
+          <div class="row">
+            <div class="col-md-8 mx-auto">
+              <h5 class="text-center text-danger mb-4">🔐 Confirmación requerida</h5>
+              
+              <form hx-post="/api/profile/delete-account" 
+                    hx-target="#delete-alerts" 
+                    hx-swap="innerHTML"
+                    hx-indicator="#delete-loading">
+                
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="mb-4">
+                  <label for="confirmEmail" class="form-label">
+                    <strong>Para confirmar, escribe tu email exactamente:</strong>
+                  </label>
+                  <input type="email" class="form-control form-control-lg text-center input-lg" 
+                         id="confirmEmail" name="confirm_email" 
+                         placeholder="{{ user.email }}" required>
+                  <div class="form-text text-center">
+                    Debes escribir tu email exactamente como aparece arriba
+                  </div>
+                </div>
+                
+                <div class="mb-4">
+                  <div class="custom-confirmation-box p-4 border border-danger rounded-3 bg-light">
+                    <div class="form-check">
+                      <input class="form-check-input custom-checkbox" type="checkbox" 
+                             id="confirmDelete" name="confirm_delete" required>
+                      <label class="form-check-label custom-label" for="confirmDelete">
+                        <div class="d-flex align-items-start">
+                          <div class="me-3 fs-4">⚠️</div>
+                          <div>
+                            <div class="fw-bold text-danger mb-2">Confirmación de eliminación</div>
+                            <p class="mb-0 text-dark">
+                              <strong>Entiendo y acepto que:</strong>
+                            </p>
+                            <ul class="mt-2 mb-0 text-dark">
+                              <li>Esta acción es <strong class="text-danger">irreversible</strong></li>
+                              <li>Se eliminará <strong class="text-danger">permanentemente</strong> mi cuenta</li>
+                              <li>Se borrará toda mi <strong class="text-danger">información personal</strong></li>
+                              <li>Se eliminará mi <strong class="text-danger">historial y configuraciones</strong></li>
+                              <li><strong class="text-danger">No podré recuperar</strong> estos datos</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Alertas -->
+                <div id="delete-alerts" class="mb-4"></div>
+                
+                <div class="d-grid gap-3">
+                  <button type="submit" class="btn btn-danger btn-lg py-3" id="deleteButton" disabled>
+                    <span class="btn-text">
+                      <i class="bi bi-trash3"></i> 
+                      ELIMINAR MI CUENTA PERMANENTEMENTE
+                    </span>
+                    <span id="delete-loading" class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+                  </button>
+                  
+                  <button type="button" class="btn btn-outline-secondary btn-lg"
+                          hx-get="/profile-content" 
+                          hx-target="#panel-content" 
+                          hx-swap="innerHTML">
+                    <i class="bi bi-arrow-left"></i> Cancelar y volver al perfil
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+(function() {
+    // Ejecutar inmediatamente cuando se carga el template
+    setTimeout(function() {
+        const emailInput = document.getElementById('confirmEmail');
+        const checkbox = document.getElementById('confirmDelete');
+        const deleteButton = document.getElementById('deleteButton');
+        
+        if (!emailInput || !checkbox || !deleteButton) return;
+        
+        const requiredEmail = emailInput.placeholder;
+        
+        function updateButtonState() {
+            const emailMatches = emailInput.value.trim() === requiredEmail;
+            const checkboxChecked = checkbox.checked;
+            
+            if (emailMatches && checkboxChecked) {
+                deleteButton.disabled = false;
+                deleteButton.classList.remove('btn-secondary');
+                deleteButton.classList.add('btn-danger');
+            } else {
+                deleteButton.disabled = true;
+                deleteButton.classList.remove('btn-danger');
+                deleteButton.classList.add('btn-secondary');
+            }
+        }
+        
+        // Escuchar cambios en el email y checkbox
+        emailInput.addEventListener('input', updateButtonState);
+        checkbox.addEventListener('change', updateButtonState);
+        
+        // Estado inicial
+        updateButtonState();
+        
+        // Efecto visual al marcar checkbox
+        checkbox.addEventListener('change', function() {
+            const box = document.querySelector('.custom-confirmation-box');
+            if (box) {
+                if (this.checked) {
+                    box.style.borderColor = '#28a745';
+                    box.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
+                } else {
+                    box.style.borderColor = '#dc3545';
+                    box.style.background = 'linear-gradient(135deg, #fff5f5 0%, #ffeaea 100%)';
+                }
+            }
+        });
+    }, 100);
+})();
+</script>
