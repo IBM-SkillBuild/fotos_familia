@@ -39,16 +39,16 @@
     <meta name="msapplication-TileImage" content="{{ url_for('static', filename='icons/icon-144x144.png') }}">
     
     <!-- PWA Manifest -->
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}?v=1.0.1">
     
     <!-- Favicons y Apple Touch Icons -->
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/icon-32x32.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='icons/icon-16x16.png') }}">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
-    <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='icons/icon-152x152.png') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
-    <link rel="apple-touch-icon" sizes="167x167" href="{{ url_for('static', filename='icons/icon-152x152.png') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}?v=1.0.1">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/icon-32x32.png') }}?v=1.0.1">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='icons/icon-16x16.png') }}?v=1.0.1">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}?v=1.0.1">
+    <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='icons/icon-152x152.png') }}?v=1.0.1">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}?v=1.0.1">
+    <link rel="apple-touch-icon" sizes="167x167" href="{{ url_for('static', filename='icons/icon-152x152.png') }}?v=1.0.1">
     
     <!-- Splash Screens para iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -248,7 +248,7 @@
     />
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
     />
 
     <style>
@@ -1688,7 +1688,7 @@
         </div>
         <div class="photo-modal-footer">
           <small class="text-muted" id="photoModalInfo"></small>
-          <button class="btn btn-primary" onclick="downloadPhoto(document.getElementById('photoModalImage').src, document.getElementById('photoModalTitle').textContent)">
+          <button id="download-button" class="btn btn-primary" onclick="downloadPhoto(document.getElementById('photoModalImage').src, document.getElementById('photoModalTitle').textContent)">
             <i class="fas fa-download me-2"></i>Descargar
           </button>
         </div>
@@ -1827,13 +1827,55 @@
         }
       }
 
-      function downloadPhoto(src, filename) {
-        const link = document.createElement('a');
-        link.href = src;
-        link.download = filename || 'foto.jpg';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      async function downloadPhoto(src, filename) {
+        const downloadButton = document.getElementById('download-button');
+        if (!downloadButton) return;
+
+        const originalButtonContent = downloadButton.innerHTML;
+        downloadButton.disabled = true;
+        downloadButton.innerHTML = `
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          Descargando...
+        `;
+
+        try {
+          const response = await fetch(src, {
+            method: 'GET',
+            mode: 'cors',
+            cache: 'no-store'
+          });
+          if (!response.ok) {
+            throw new Error('La respuesta de la red no fue correcta');
+          }
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename || 'foto.jpg';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+
+          // Show success message
+          downloadButton.innerHTML = `
+            <i class="fas fa-check me-2"></i>
+            Descarga Realizada
+          `;
+
+        } catch (error) {
+          console.error('Error al descargar la foto:', error);
+          alert('No se pudo descargar la foto.');
+          // Revert button on error
+          downloadButton.innerHTML = originalButtonContent;
+
+        } finally {
+            // Revert button back to original state after a delay
+            setTimeout(() => {
+                downloadButton.disabled = false;
+                downloadButton.innerHTML = originalButtonContent;
+            }, 2000); // 2 seconds
+        }
       }
 
       // Atajos de teclado para el modal

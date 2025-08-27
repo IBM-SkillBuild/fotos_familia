@@ -1,7 +1,7 @@
 // Service Worker para Fotos de Familia PWA
-const CACHE_NAME = 'fotos-familia-v1.0.0';
-const STATIC_CACHE = 'static-v1.0.0';
-const DYNAMIC_CACHE = 'dynamic-v1.0.0';
+const CACHE_NAME = 'fotos-familia-v1.0.1';
+const STATIC_CACHE = 'static-v1.0.1';
+const DYNAMIC_CACHE = 'dynamic-v1.0.1';
 
 // Detectar si estamos en desarrollo (localhost)
 const isDevelopment = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';
@@ -21,7 +21,13 @@ const STATIC_FILES = isDevelopment ? [
   '/static/js/store.js',
   '/static/js/paginacion.js',
   '/static/manifest.json',
+  '/static/icons/icon-72x72.png',
+  '/static/icons/icon-96x96.png',
+  '/static/icons/icon-128x128.png',
+  '/static/icons/icon-144x144.png',
+  '/static/icons/icon-152x152.png',
   '/static/icons/icon-192x192.png',
+  '/static/icons/icon-384x384.png',
   '/static/icons/icon-512x512.png',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',

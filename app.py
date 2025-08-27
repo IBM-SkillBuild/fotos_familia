@@ -664,9 +664,6 @@ def get_current_user():
     user_id = session['user_id']
     access_token = session['access_token']
 
-    print(
-        f"DEBUG: Verificando usuario {user_id} con token {access_token[:10]}...")
-
     conn = get_db()
     user = conn.execute('''
         SELECT * FROM users 
@@ -675,10 +672,8 @@ def get_current_user():
     conn.close()
 
     if user:
-        print(f"DEBUG: Usuario válido encontrado: {user['name']}")
         return user
     else:
-        print("DEBUG: Usuario no encontrado o token expirado")
         # Limpiar sesión inválida
         session.clear()
         return None
@@ -874,6 +869,7 @@ def htmx_register():
 @limiter.limit("10 per minute")
 def htmx_login():
     """Wrapper HTMX para login que guarda código directamente"""
+    app_logger.info('htmx_login function started')
     try:
         email = request.form.get('email', '').strip()
 
@@ -919,8 +915,7 @@ def htmx_login():
 
     except Exception as e:
         log_error('htmx_login', e, f'Email: {email}')
-        return render_template('auth_login_form.html')
-        return render_template('auth_login_form.html')
+        return render_template('auth_login_form.html', error="Error interno del servidor. Inténtalo de nuevo.")
 
 
 @app.route('/api/auth/htmx-verify', methods=['POST'])
@@ -4565,4 +4560,4 @@ def robots_txt():
 if __name__ == '__main__':
     init_db()
     app_logger.info("APLICACION INICIADA")
-    app.run(debug=True, host='0.0.0.0', port=5002)
+    app.run(debug=True, host='0.0.0.0', port=5003)

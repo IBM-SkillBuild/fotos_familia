@@ -90,7 +90,12 @@
       {% endif %}
 
       <!-- Form -->
-      <form method="post" action="/api/auth/htmx-verify">
+      <form 
+        hx-post="/api/auth/htmx-verify"
+        hx-target="#auth-container"
+        hx-swap="innerHTML"
+        hx-indicator="#verifying-loading"
+      >
         <input type="hidden" name="email" value="{{ email }}" />
 
         <div style="margin-bottom: 1rem;">
@@ -170,6 +175,30 @@
           </button>
         </div>
       </form>
+
+      <!-- Loading -->
+      <div id="verifying-loading" style="
+        display: none;
+        background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+        border: 1px solid #34d399;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-top: 1rem;
+      ">
+        <div style="
+          border: 3px solid #4a5568;
+          border-top: 3px solid #10b981;
+          border-radius: 50%;
+          width: 2rem;
+          height: 2rem;
+          animation: spin 1s linear infinite;
+          margin: 0 auto 1rem auto;
+        "></div>
+        <p style="color: #10b981; font-weight: 500; margin: 0;">
+          Verificando código...
+        </p>
+      </div>
       
     </div>
   </div>

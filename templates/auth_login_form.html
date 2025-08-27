@@ -91,7 +91,9 @@
         hx-post="/api/auth/htmx-login"
         hx-target="#auth-container"
         hx-swap="innerHTML"
-        hx-indicator="#login-loading"
+        hx-trigger="submit"
+        hx-encoding="application/x-www-form-urlencoded"
+        hx-headers='{"X-Requested-With": "XMLHttpRequest"}'
       >
         <div style="margin-bottom: 1rem;">
           <label for="email" style="color: #ffffff; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; display: block;">
@@ -128,23 +130,36 @@
 
         <!-- Botones -->
         <div style="display: flex; flex-direction: column; gap: 1rem;">
-          <button type="submit" style="
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            border: 2px solid #34d399;
-            color: #ffffff;
-            font-weight: 600;
-            padding: 0.875rem 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            width: 100%;
-            font-size: 0.95rem;
-          "
-          onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 35px rgba(16, 185, 129, 0.6)'"
-          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(16, 185, 129, 0.4)'">
-            <i class="fas fa-paper-plane" style="color: #ffffff; margin-right: 0.5rem;"></i>
-            Enviar Código de Acceso
+          <!-- Reemplazar el botón submit actual por este -->
+          <button type="submit" 
+            style="
+              background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+              border: 2px solid #34d399;
+              color: #ffffff;
+              font-weight: 600;
+              padding: 0.875rem 1.5rem;
+              border-radius: 8px;
+              box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+              transition: all 0.3s ease;
+              cursor: pointer;
+              width: 100%;
+              font-size: 0.95rem;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 0.5rem;
+            "
+            onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 35px rgba(16, 185, 129, 0.6)'"
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(16, 185, 129, 0.4)'"
+          >
+            <span class="button-content">
+                <i class="fas fa-paper-plane"></i>
+                Enviar Código de Acceso
+            </span>
+            <div class="spinner">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <span>Enviando...</span>
+            </div>
           </button>
           
           <button
@@ -172,48 +187,34 @@
           </button>
         </div>
       </form>
-
-      <!-- Loading -->
-      <div id="login-loading" style="
-        display: none;
-        background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
-        border: 1px solid #34d399;
-        border-radius: 12px;
-        padding: 1.5rem;
-        text-align: center;
-        margin-top: 1rem;
-      ">
-        <div style="
-          border: 3px solid #4a5568;
-          border-top: 3px solid #10b981;
-          border-radius: 50%;
-          width: 2rem;
-          height: 2rem;
-          animation: spin 1s linear infinite;
-          margin: 0 auto 1rem auto;
-        "></div>
-        <p style="color: #10b981; font-weight: 500; margin: 0;">
-          Enviando código de acceso...
-        </p>
-      </div>
       
     </div>
   </div>
 </div>
 
 <style>
+.spinner {
+    display: none !important;
+}
+
+.htmx-request .spinner {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.htmx-request .button-content {
+    display: none !important;
+}
+
+.fa-spin {
+    animation: spin 1s linear infinite;
+}
+
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.htmx-indicator {
-  display: block !important;
-}
-
-input::placeholder {
-  color: #a0aec0 !important;
-  opacity: 0.7;
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 </style>
 
