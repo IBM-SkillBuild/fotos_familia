@@ -43,6 +43,7 @@ cloudinary.config(
 
 app = Flask(__name__)
 app.config.from_object(Config)
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 app.config['WTF_CSRF_ENABLED'] = False  # Desactivar CSRF para pruebas
 
 # Configurar Rate Limiting
@@ -4560,4 +4561,4 @@ def robots_txt():
 if __name__ == '__main__':
     init_db()
     app_logger.info("APLICACION INICIADA")
-    app.run(debug=True, host='0.0.0.0', port=5004)
+    app.run(debug=True, host='0.0.0.0', port=5000)

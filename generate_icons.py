@@ -7,7 +7,7 @@ Requiere Pillow: pip install Pillow
 from PIL import Image, ImageDraw, ImageFont
 import os
 
-def create_icon_with_text(size, text="📸", bg_color="#0d6efd", text_color="white"):
+def create_icon_with_text(size, text="❤️", bg_color="#f0f0f0", text_color="black"):
     """Crear un icono con texto/emoji"""
     # Crear imagen con fondo
     img = Image.new('RGBA', (size, size), bg_color)
@@ -60,7 +60,7 @@ def generate_pwa_icons():
         # Guardar
         filename = f'static/icons/icon-{size}x{size}.png'
         icon.save(filename, 'PNG', optimize=True)
-        print(f"✓ Guardado: {filename}")
+        print(f"OK Guardado: {filename}")
     
     # Crear favicon.ico (múltiples tamaños)
     print("Generando favicon.ico...")
@@ -76,15 +76,15 @@ def generate_pwa_icons():
         format='ICO',
         sizes=[(size, size) for size in favicon_sizes]
     )
-    print("✓ Guardado: static/favicon.ico")
+    print("OK Guardado: static/favicon.ico")
     
     # Crear apple-touch-icon
     print("Generando apple-touch-icon...")
     apple_icon = create_icon_with_text(180)
     apple_icon.save('static/apple-touch-icon.png', 'PNG', optimize=True)
-    print("✓ Guardado: static/apple-touch-icon.png")
+    print("OK Guardado: static/apple-touch-icon.png")
     
-    print("\n🎉 ¡Todos los iconos PWA generados exitosamente!")
+    print("\n¡Todos los iconos PWA generados exitosamente!")
     print("\nIconos creados:")
     for size in sizes:
         print(f"  - icon-{size}x{size}.png")
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     try:
         generate_pwa_icons()
     except ImportError:
-        print("❌ Error: Pillow no está instalado")
+        print("ERROR: Pillow no está instalado")
         print("Instala con: pip install Pillow")
     except Exception as e:
-        print(f"❌ Error generando iconos: {e}")
+        print(f"ERROR generando iconos: {e}")
