@@ -6,3 +6,4 @@ Flask-WTF
 cloudinary
 requests
 Pillow
+whitenoise

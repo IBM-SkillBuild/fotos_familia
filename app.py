@@ -36,6 +36,8 @@ from services import detect_faces_facepp, get_face_crop, upload_temp_face_crop, 
 from dotenv import load_dotenv
 load_dotenv()
 
+from whitenoise import WhiteNoise
+
 # Configurar Cloudinary
 cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
@@ -45,6 +47,8 @@ cloudinary.config(
 
 app = Flask(__name__, static_folder='static')
 app.config.from_object(Config)
+app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/')
+
 
 
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600  # 1 hora
