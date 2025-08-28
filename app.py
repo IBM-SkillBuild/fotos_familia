@@ -9,7 +9,7 @@ from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf
 from flask_wtf import FlaskForm
 from config import Config
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, g
 import sqlite3
 import secrets
 import hashlib
@@ -266,14 +266,19 @@ def migrate_interaction_data(conn):
 
 
 def get_db():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
+    """Obtener conexión a la base de datos desde el contexto de la aplicación"""
+    if 'db' not in g:
+        g.db = sqlite3.connect(DATABASE, check_same_thread=False)
+        g.db.row_factory = sqlite3.Row
+        g.db.execute('PRAGMA journal_mode=WAL;')
+    return g.db
 
-    # Ejecutar migración si es necesario
-    migrate_existing_data(conn)
-    migrate_interaction_data(conn)
-
-    return conn
+@app.teardown_appcontext
+def close_db(e=None):
+    """Cerrar la conexión a la base de datos al final de la petición"""
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
 
 
 def create_user_email(name, email):
