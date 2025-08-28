@@ -44,6 +44,7 @@ cloudinary.config(
 app = Flask(__name__)
 app.config.from_object(Config)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 año
 app.config['WTF_CSRF_ENABLED'] = False  # Desactivar CSRF para pruebas
 
 # Configurar Rate Limiting
