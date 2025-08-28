@@ -44,10 +44,10 @@ cloudinary.config(
 
 app = Flask(__name__)
 app.config.from_object(Config)
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 año
-# Configurar timeout del socket
-socket.setdefaulttimeout(300)  # 300 segundos = 5 minutos
+
+
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600  # 1 hora
+socket.setdefaulttimeout(120)  # 120 segundos
 app.config['WTF_CSRF_ENABLED'] = False  # Desactivar CSRF para pruebas
 
 # Configurar Rate Limiting
@@ -4568,4 +4568,4 @@ def robots_txt():
 if __name__ == '__main__':
     init_db()
     app_logger.info("APLICACION INICIADA")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run( host='0.0.0.0', port=5000)
