@@ -41,6 +41,9 @@
       width: 100%;
       max-width: none;
     }
+    .gallery-header select.form-select option {
+      color: black; /* Ensure options are visible */
+    }
     .gallery-header p.text-muted {
       font-size: 0.9rem;
       margin-bottom: 0.5rem;
@@ -48,6 +51,7 @@
     .gallery-header .btn {
       width: auto;
     }
+    
     .fixed-top-controls {
       flex-direction: column !important;
       align-items: stretch !important;
@@ -71,7 +75,40 @@
       gap: 0.5rem;
       margin-right: 0 !important;
     }
+    /* Estilos para el select */
+  .custom-select {
+    appearance: none; /* Elimina el estilo nativo del navegador */
+    background-color: #333333; /* Fondo oscuro */
+    color: #ffffff; /* Texto blanco */
+    padding: 0.5rem 2rem 0.5rem 1rem;
+    
+    font-size: 1rem;
+    border: 1px solid #555555;
+    border-radius: 4px;
+    width: 220px;
+    min-width: 150px;
+    cursor: pointer;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>'); /* Flecha personalizada */
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1.2rem;
   }
+
+  /* Estilos para las opciones (limitado por navegadores) */
+  .custom-select option {
+    background-color: #333333; /* Fondo oscuro para las opciones */
+    color: #ffffff; /* Texto blanco */
+    padding: 0.5rem;
+  }
+
+  /* Efecto hover y focus */
+  .custom-select:hover,
+  .custom-select:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.3);
+  }
+
 </style>
 
 <!-- Galería de Todas las Fotos -->
@@ -81,11 +118,11 @@
     <!-- Primera fila: Título, dropdown, contador y botón volver -->
     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-3 gallery-header">
       <div class="d-flex align-items-center gap-2 left-section">
-        <h2 class="mb-1 text-white">
+        <h2 class="mb-1 text-white" style="padding-right: 2rem">
           <i class="fas fa-images text-primary me-2"></i>
           Todas las Fotos
         </h2>
-        <select name="buscar_persona" class="form-select form-select-sm" style="width: 200px; min-width: 150px;"
+        <select name="buscar_persona"  class="custom-select" style="height: 35px;border-radius: 5px;"
                 hx-get="{% if is_my_photos %}/api/buscar-mis-fotos-persona{% else %}/api/buscar-fotos-persona{% endif %}"
                 hx-trigger="change"
                 hx-target="#panel-content"
@@ -183,7 +220,6 @@
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   // Función para forzar el colapso del menú hamburguesa
   function collapseMobileNav() {

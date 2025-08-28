@@ -9,7 +9,7 @@ from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf
 from flask_wtf import FlaskForm
 from config import Config
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, g
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for,g
 import sqlite3
 import secrets
 import hashlib
@@ -305,7 +305,8 @@ def create_user_email(name, email):
         return None
     finally:
         if conn:
-            conn.close()
+            pass
+
 
 
 def create_user_session_email(user_id):
@@ -335,9 +336,8 @@ def create_user_session_email(user_id):
     except Exception as e:
         log_error('create_user_session_email', e, f'User ID: {user_id}')
         return None
-    finally:
-        if conn:
-            conn.close()
+    
+
 
 
 def store_verification_code(email, name, code):
@@ -365,9 +365,8 @@ def store_verification_code(email, name, code):
     except Exception as e:
         log_error('store_verification_code', e, f'Email: {email}')
         return False
-    finally:
-        if conn:
-            conn.close()
+    
+
 
 
 def verify_code(email, code):
@@ -396,9 +395,8 @@ def verify_code(email, code):
     except Exception as e:
         log_error('verify_code', e, f'Email: {email}')
         return None
-    finally:
-        if conn:
-            conn.close()
+    
+
 
 
 def cleanup_expired_codes():
@@ -417,9 +415,8 @@ def cleanup_expired_codes():
 
     except Exception as e:
         log_error('cleanup_expired_codes', e, 'Cleanup failed')
-    finally:
-        if conn:
-            conn.close()
+    
+
 
 
 def update_interaction_days(user_id):
@@ -457,9 +454,8 @@ def update_interaction_days(user_id):
     except Exception as e:
         app_logger.error(
             f"Error updating interaction days for user {user_id}: {e}")
-    finally:
-        if conn:
-            conn.close()
+    
+
 
 
 def upload_to_cloudinary(file, user_id, original_filename):
@@ -671,6 +667,7 @@ def require_debug(f):
     return decorated_function
 
 
+
 def get_current_user():
     """Obtener usuario actual de la sesión"""
     if 'user_id' not in session or 'access_token' not in session:
@@ -680,18 +677,21 @@ def get_current_user():
     access_token = session['access_token']
 
     conn = get_db()
-    user = conn.execute('''
+    user_row = conn.execute('''
         SELECT * FROM users 
         WHERE id = ? AND access_token = ? AND token_expires > ?
     ''', (user_id, access_token, datetime.now())).fetchone()
-    conn.close()
-
-    if user:
+    
+    if user_row:
+        # Convert row to dict before closing connection
+        user = dict(user_row)
         return user
     else:
+        conn.close()
         # Limpiar sesión inválida
         session.clear()
         return None
+
 
 @app.route('/health')
 def health_check():
@@ -849,7 +849,7 @@ def htmx_register():
             'SELECT id FROM users WHERE email = ?', (email,)).fetchone()
 
         if existing_user:
-            conn.close()
+
             return render_template('auth_user_exists.html', email=email)
 
         # Generar código de verificación
@@ -867,7 +867,7 @@ def htmx_register():
         ''', (name, email, verification_code, code_expires, datetime.now(), datetime.now()))
 
         conn.commit()
-        conn.close()
+
 
         # Enviar código por email
         email_sent = send_verification_email(email, verification_code, name)
@@ -900,7 +900,7 @@ def htmx_login():
             'SELECT id, name FROM users WHERE email = ?', (email,)).fetchone()
 
         if not existing_user:
-            conn.close()
+
             return render_template('auth_user_not_found.html', email=email)
 
         # Generar código de verificación
@@ -919,7 +919,7 @@ def htmx_login():
         ''', (verification_code, code_expires, datetime.now(), email))
 
         conn.commit()
-        conn.close()
+
 
         # Enviar código por email
         email_sent = send_verification_email(
@@ -982,7 +982,7 @@ def htmx_verify():
         ''', (email, code, datetime.now())).fetchone()
 
         if not user:
-            conn.close()
+
             return render_template('auth_verify_simple.html',
                                    email=email,
                                    error="Código incorrecto o expirado",
@@ -996,7 +996,7 @@ def htmx_verify():
         ''', (datetime.now(), user['id']))
 
         conn.commit()
-        conn.close()
+
 
         user_id = user['id']
 
@@ -1317,7 +1317,7 @@ def upload_photos():
                 print(f"Foto {file.filename} subida exitosamente")
 
         conn.commit()
-        conn.close()
+
 
         # Preparar respuesta
         success_count = len(uploaded_photos)
@@ -1376,7 +1376,7 @@ def fotos_recien_subidas():
             ORDER BY p.created_at DESC
         ''', foto_ids).fetchall()
 
-        conn.close()
+
 
         # Convertir a lista de diccionarios
         fotos_list = []
@@ -1454,7 +1454,7 @@ def actualizar_nombre(photo_id):
     ).fetchone()
 
     if not foto:
-        conn.close()
+
         return '<div class="alert alert-danger">Foto no encontrada o sin permiso.</div>', 404
 
     try:
@@ -1467,14 +1467,14 @@ def actualizar_nombre(photo_id):
             (nuevo_nombre, datetime.now(), photo_id)
         )
         conn.commit()
-        conn.close()
+
         log_user_action(user['id'], 'UPDATE_PHOTO_NAME',
                         f'Updated photo ID: {photo_id} to name: {nuevo_nombre}')
 
         return '<div class="alert alert-success">Nombre actualizado correctamente.</div>'
 
     except Exception as e:
-        conn.close()
+
         log_error('actualizar_nombre', e,
                   f'User: {user["id"]}, Photo ID: {photo_id}')
         return f'<div class="alert alert-danger">Error al actualizar: {e}</div>', 500
@@ -1656,7 +1656,7 @@ def update_profile():
             WHERE id = ?
         ''', (name, phone if phone else None, datetime.now(), user['id']))
         conn.commit()
-        conn.close()
+
 
         log_user_action(user['id'], 'UPDATE_PROFILE_SUCCESS',
                         f'Updated: {name}, {phone}')
@@ -1774,7 +1774,7 @@ def delete_account_modal():
             if email_requests_row:
                 user_stats['email_requests'] = email_requests_row['count']
 
-            conn.close()
+
         except:
             pass  # Usar valores por defecto
 
@@ -1889,7 +1889,7 @@ def request_email_change():
             'SELECT id FROM users WHERE email = ?', (new_email,)).fetchone()
 
         if existing_user:
-            conn.close()
+
             return '''
             <div class="alert alert-danger">
                 <strong>Error:</strong> Este email ya está en uso por otra cuenta.
@@ -1918,7 +1918,7 @@ def request_email_change():
             VALUES (?, ?, ?, ?)
         ''', (user['id'], new_email, verification_code, code_expires))
         conn.commit()
-        conn.close()
+
 
         # Enviar email de verificación al NUEVO email
         from email_service import email_service
@@ -2036,7 +2036,7 @@ def confirm_email_change():
         ''', (user['id'],)).fetchone()
 
         if not request_data:
-            conn.close()
+
             return '''
             <div class="alert alert-danger">
                 <strong>Error:</strong> No se encontró solicitud de cambio de email.
@@ -2045,7 +2045,7 @@ def confirm_email_change():
 
         # Verificar que el código coincida
         if request_data['verification_code'] != verification_code:
-            conn.close()
+
             return '''
             <div class="alert alert-danger">
                 <strong>Error:</strong> Código de verificación incorrecto.
@@ -2055,7 +2055,7 @@ def confirm_email_change():
         # Verificar que no haya expirado
         expires = datetime.fromisoformat(request_data['expires'])
         if datetime.now() > expires:
-            conn.close()
+
             return '''
             <div class="alert alert-danger">
                 <strong>Error:</strong> El código ha expirado. Solicita uno nuevo.
@@ -2077,7 +2077,7 @@ def confirm_email_change():
             'DELETE FROM email_change_requests WHERE user_id = ?', (user['id'],))
 
         conn.commit()
-        conn.close()
+
 
         log_user_action(user['id'], 'EMAIL_CHANGED_SUCCESS',
                         f'From: {old_email} To: {new_email}')
@@ -2187,7 +2187,7 @@ def process_delete_account():
         conn.execute('DELETE FROM users WHERE id = ?', (user_id,))
 
         conn.commit()
-        conn.close()
+
 
         # Logging de eliminación exitosa
         log_user_action(user_id, 'ACCOUNT_DELETED_SUCCESS',
@@ -2257,7 +2257,7 @@ def logout():
                 WHERE id = ?
             ''', (user_id,))
             conn.commit()
-            conn.close()
+
             log_database_operation(
                 'UPDATE', 'users', f'Cleared session for user {user_id}')
 
@@ -2300,7 +2300,7 @@ def api_logout():
                 WHERE id = ?
             ''', (user_id,))
             conn.commit()
-            conn.close()
+
             log_database_operation(
                 'UPDATE', 'users', f'Cleared session for user {user_id}')
 
@@ -2410,7 +2410,7 @@ def extend_session():
             WHERE id = ?
         ''', (new_expires, datetime.now(), user['id']))
         conn.commit()
-        conn.close()
+
 
         log_user_action(user['id'], 'EXTEND_SESSION',
                         f'Session extended until {new_expires}')
@@ -2503,7 +2503,7 @@ def auth_register():
         conn = get_db()
         existing_user = conn.execute(
             'SELECT id FROM users WHERE email = ?', (email,)).fetchone()
-        conn.close()
+
 
         if existing_user:
             return jsonify({
@@ -2535,7 +2535,7 @@ def auth_register():
             VALUES (?, ?, ?, ?)
         ''', (email, name, verification_code, code_expires))
         conn.commit()
-        conn.close()
+
 
         # Enviar email con código
         from email_service import email_service
@@ -2589,7 +2589,7 @@ def auth_login():
         conn = get_db()
         existing_user = conn.execute(
             'SELECT id, name FROM users WHERE email = ?', (email,)).fetchone()
-        conn.close()
+
 
         if not existing_user:
             return jsonify({
@@ -2620,7 +2620,7 @@ def auth_login():
             VALUES (?, ?, ?, ?)
         ''', (email, existing_user['name'], verification_code, code_expires))
         conn.commit()
-        conn.close()
+
 
         # Enviar email con código
         from email_service import email_service
@@ -2695,7 +2695,7 @@ def auth_verify_email():
         ''', (email,)).fetchone()
 
         if not verification:
-            conn.close()
+
             return jsonify({
                 'error': True,
                 'code': 'VERIFICATION_NOT_FOUND',
@@ -2704,7 +2704,7 @@ def auth_verify_email():
 
         # Verificar que el código coincida
         if verification['code'] != code:
-            conn.close()
+
             return jsonify({
                 'error': True,
                 'code': 'INVALID_CODE',
@@ -2714,7 +2714,7 @@ def auth_verify_email():
         # Verificar que no haya expirado
         expires = datetime.fromisoformat(verification['expires'])
         if datetime.now() > expires:
-            conn.close()
+
             return jsonify({
                 'error': True,
                 'code': 'CODE_EXPIRED',
@@ -2725,7 +2725,7 @@ def auth_verify_email():
         conn.execute(
             'DELETE FROM email_verification WHERE email = ?', (email,))
         conn.commit()
-        conn.close()
+
 
         # Si es registro, crear usuario
         if action == 'register':
@@ -2874,7 +2874,7 @@ def borrar_fotos():
                 deleted_count += 1
 
         conn.commit()
-        conn.close()
+
 
         log_user_action(user['id'], 'DELETE_PHOTOS',
                         f'Deleted {deleted_count} photos')
@@ -2908,7 +2908,7 @@ def ver_mis_fotos():
             ORDER BY p.año DESC, p.mes DESC, p.created_at DESC
         ''', (user['id'],)).fetchall()
 
-        conn.close()
+
 
         # Convertir a lista de diccionarios para facilitar el manejo en el template
         fotos_list = []
@@ -2961,7 +2961,7 @@ def gestionar_personas():
             ORDER BY nombre ASC
         ''').fetchall()
 
-        conn.close()
+
 
         # Convertir a lista de diccionarios
         personas_list = []
@@ -3000,7 +3000,7 @@ def ver_todas_fotos():
             ORDER BY p.año DESC, p.mes DESC, p.created_at DESC
         ''').fetchall()
 
-        conn.close()
+
 
         # Convertir a lista de diccionarios para facilitar el manejo en el template
         fotos_list = []
@@ -3051,7 +3051,7 @@ def get_personas():
             FROM personas
             ORDER BY nombre ASC
         ''').fetchall()
-        conn.close()
+
 
         personas_list = []
         for persona in personas:
@@ -3130,14 +3130,14 @@ def add_person():
             existing = conn.execute(
                 'SELECT id, nombre FROM personas WHERE id = ?', (person_id,)).fetchone()
             if not existing:
-                conn.close()
+    
                 return jsonify({'success': False, 'message': 'Persona no encontrada'}), 404
 
             # Verificar que no existe otra persona con el mismo nombre
             name_conflict = conn.execute(
                 'SELECT id FROM personas WHERE nombre = ? AND id != ?', (nombre, person_id)).fetchone()
             if name_conflict:
-                conn.close()
+    
                 return jsonify({'success': False, 'message': 'Ya existe otra persona con ese nombre'}), 400
 
             # Actualizar persona existente
@@ -3148,7 +3148,7 @@ def add_person():
             ''', (nombre, imagen_url, datetime.now(), person_id))
 
             conn.commit()
-            conn.close()
+
 
             log_user_action(user['id'], 'EDIT_PERSON',
                             f'Edited person: {nombre}')
@@ -3165,7 +3165,7 @@ def add_person():
             existing = conn.execute(
                 'SELECT id FROM personas WHERE nombre = ?', (nombre,)).fetchone()
             if existing:
-                conn.close()
+    
                 return jsonify({'success': False, 'message': 'Ya existe una persona con ese nombre'}), 400
 
             # Insertar nueva persona
@@ -3176,7 +3176,7 @@ def add_person():
 
             person_id = cursor.lastrowid
             conn.commit()
-            conn.close()
+
 
             log_user_action(user['id'], 'ADD_PERSON',
                             f'Added person: {nombre}')
@@ -3203,7 +3203,7 @@ def get_all_persons():
             SELECT id, nombre FROM personas 
             ORDER BY nombre
         ''').fetchall()
-        conn.close()
+
 
         return jsonify({
             'success': True,
@@ -3288,7 +3288,7 @@ def buscar_fotos_persona():
             foto_dict['necesita_etiquetado'] = necesita_etiquetado
             fotos_con_info.append(foto_dict)
 
-        conn.close()
+
 
         # Renderizar template completo de galería con fotos filtradas
         return render_template('galeria_todas_fotos.html', fotos=fotos_con_info, user=user)
@@ -3352,7 +3352,7 @@ def buscar_mis_fotos_persona():
 
             fotos = fotos_filtradas
 
-        conn.close()
+
 
         # Agregar información de si necesita etiquetado
         fotos_con_info = []
@@ -3412,7 +3412,7 @@ def delete_person():
         persona = conn.execute(
             'SELECT nombre, imagen FROM personas WHERE id = ?', (person_id,)).fetchone()
         if not persona:
-            conn.close()
+
             return jsonify({'success': False, 'message': 'Persona no encontrada'}), 404
 
         # Eliminar de Cloudinary si tiene imagen
@@ -3432,7 +3432,7 @@ def delete_person():
         # Eliminar persona
         conn.execute('DELETE FROM personas WHERE id = ?', (person_id,))
         conn.commit()
-        conn.close()
+
 
         user = get_current_user()
         log_user_action(user['id'], 'DELETE_PERSON',
@@ -3478,7 +3478,7 @@ def api_procesar_reconocimiento_facial():
         foto_ids = [id.strip() for id in foto_ids if id.strip().isdigit()]
 
         if not foto_ids:
-            conn.close()
+
             return render_template('etiquetar_caras_individuales.html', caras=[], user=user)
 
         # Obtener fotos con información de personas
@@ -3600,7 +3600,7 @@ def api_procesar_reconocimiento_facial():
                 except Exception as e:
                     print(f"Error procesando {foto['nombre']}: {e}")
 
-        conn.close()
+
 
         # Log de rendimiento
         end_time = time.time()
@@ -3655,7 +3655,7 @@ def mostrar_resumen_fotos_procesadas(fotos_procesadas, user, conn):
                 'personas_nombres': personas_nombres
             })
 
-        conn.close()
+
 
         return render_template('resumen_fotos_procesadas.html',
                                fotos=resumen_fotos,
@@ -3663,7 +3663,7 @@ def mostrar_resumen_fotos_procesadas(fotos_procesadas, user, conn):
 
     except Exception as e:
         print(f"Error mostrando resumen: {e}")
-        conn.close()
+
         return render_template('error.html', message='Error mostrando resumen de fotos'), 500
 
 
@@ -3675,7 +3675,7 @@ def api_debug_info():
         conn = get_db()
         foto = conn.execute(
             'SELECT id, nombre, nombre_archivo FROM photos WHERE id = 31').fetchone()
-        conn.close()
+
 
         if not foto:
             return {"error": "Foto no encontrada"}, 404
@@ -3706,13 +3706,13 @@ def api_test_one_face():
         user = conn.execute('SELECT * FROM users WHERE id = 1').fetchone()
 
         if not foto or not user:
-            conn.close()
+
             return {"error": "Foto o usuario no encontrado"}, 404
 
         # Descargar imagen
         img_response = requests.get(foto['nombre_archivo'])
         if img_response.status_code != 200:
-            conn.close()
+
             return {"error": "Error descargando imagen"}, 400
 
         # Face++
@@ -3732,7 +3732,7 @@ def api_test_one_face():
         face_result = response.json()
 
         if 'faces' not in face_result or len(face_result['faces']) == 0:
-            conn.close()
+
             return {"error": "No se detectaron caras"}, 400
 
         # Procesar SOLO la primera cara
@@ -3790,7 +3790,7 @@ def api_test_one_face():
         print(f"Resultado Cloudinary: {upload_result}")
 
         if not upload_result.get('secure_url'):
-            conn.close()
+
             return {"error": "Error subiendo a Cloudinary"}, 500
 
         # Crear array con una sola cara
@@ -3807,7 +3807,7 @@ def api_test_one_face():
         print(f"Array de caras creado: {len(caras_individuales)} elementos")
         print(f"Primera cara URL: {caras_individuales[0]['recorte_url']}")
 
-        conn.close()
+
 
         # Renderizar template
         return render_template('etiquetar_caras_individuales.html',
@@ -3831,7 +3831,7 @@ def api_test_face_json():
             'SELECT id, nombre, nombre_archivo FROM photos WHERE id = 31').fetchone()
 
         if not foto:
-            conn.close()
+
             return {"error": "Foto no encontrada"}, 404
 
         result = {
@@ -3845,7 +3845,7 @@ def api_test_face_json():
         img_response = requests.get(foto['nombre_archivo'])
         if img_response.status_code != 200:
             result["error"] = f"Error descargando imagen: {img_response.status_code}"
-            conn.close()
+
             return result, 400
 
         result["imagen_descargada"] = f"{len(img_response.content)} bytes"
@@ -3876,7 +3876,7 @@ def api_test_face_json():
         else:
             result["caras_detectadas"] = 0
 
-        conn.close()
+
         return result
 
     except Exception as e:
@@ -3898,7 +3898,7 @@ def api_test_face_simple():
         user = conn.execute('SELECT * FROM users WHERE id = 1').fetchone()
 
         if not foto or not user:
-            conn.close()
+
             return {"error": "Foto o usuario no encontrado"}, 404
 
         print(f"Procesando foto: {foto['nombre']}")
@@ -3932,7 +3932,7 @@ def api_test_face_simple():
         print(f"Respuesta Face++: {result}")
 
         if 'faces' not in result or len(result['faces']) == 0:
-            conn.close()
+
             return render_template('etiquetar_caras_individuales.html', caras=[], user=user)
 
         faces = result['faces']
@@ -3998,7 +3998,7 @@ def api_test_face_simple():
             except Exception as e:
                 print(f"Error procesando cara {idx + 1}: {e}")
 
-        conn.close()
+
 
         print(f"RESULTADO: {len(caras_individuales)} caras procesadas")
 
@@ -4027,7 +4027,7 @@ def api_test_gestionar_personas():
             ORDER BY nombre
         ''').fetchall()
 
-        conn.close()
+
 
         return render_template('gestionar_personas.html', personas=personas, user=user)
 
@@ -4050,7 +4050,7 @@ def api_test_foto_procesada():
             'SELECT id, nombre, nombre_archivo, personas_ids FROM photos WHERE id = 1').fetchone()
 
         if not foto:
-            conn.close()
+
             return {"error": "Foto no encontrada"}, 404
 
         print(f"Foto ID 1 - personas_ids: {foto['personas_ids']}")
@@ -4061,7 +4061,7 @@ def api_test_foto_procesada():
             return mostrar_resumen_fotos_procesadas([foto], user, conn)
         else:
             print("Foto sin procesar")
-            conn.close()
+
             return {"message": "Foto sin procesar"}
 
     except Exception as e:
@@ -4080,7 +4080,7 @@ def api_test_procesar_reconocimiento_facial():
         user = conn.execute('SELECT * FROM users WHERE id = 1').fetchone()
 
         if not user:
-            conn.close()
+
             return render_template('error.html', message='Usuario no encontrado'), 404
 
         # Obtener IDs de fotos específicas desde la query string
@@ -4094,7 +4094,7 @@ def api_test_procesar_reconocimiento_facial():
 
         if not foto_ids:
             print("❌ No hay IDs válidos para procesar")
-            conn.close()
+
             return render_template('etiquetar_caras_individuales.html', caras=[], user=user)
 
         # Obtener la foto específica
@@ -4216,7 +4216,7 @@ def api_test_procesar_reconocimiento_facial():
             except Exception as e:
                 print(f"❌ Error procesando {foto['nombre']}: {e}")
 
-        conn.close()
+
 
         print(f"🎯 RESUMEN FINAL:")
         print(f"   - Fotos procesadas: {len(fotos_recientes)}")
@@ -4379,7 +4379,7 @@ def api_guardar_etiquetas_personas():
                 fotos_actualizadas += 1
 
         conn.commit()
-        conn.close()
+
 
         log_user_action(user['id'], 'SAVE_PERSON_TAGS',
                         f'Created {personas_creadas} persons, updated {fotos_actualizadas} photos')
@@ -4549,7 +4549,7 @@ def api_guardar_identificaciones_caras():
                 f"✅ Foto {foto_id} actualizada con personas: {todas_personas}")
 
         conn.commit()
-        conn.close()
+
 
         log_user_action(user['id'], 'SAVE_FACE_IDENTIFICATIONS',
                         f'Created {personas_creadas} persons, updated {len(fotos_actualizadas)} photos')

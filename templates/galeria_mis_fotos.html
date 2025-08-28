@@ -10,12 +10,12 @@
   <div class="mb-4">
     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-3 gallery-header">
       <div class="d-flex flex-column flex-sm-row align-items-center gap-2 left-section">
-        <h2 class="mb-1 text-white">
+        <h2 class="mb-1 text-white" style="padding-right: 2em;">
           <i class="fas fa-user-images text-info me-2"></i>
           Mis Fotos
         </h2>
         <div class="d-flex align-items-center gap-2">
-          <select name="buscar_persona" class="form-select form-select-sm" style="width: 200px; min-width: 150px;"
+          <select name="buscar_persona" class="custom-select" style="height: 35px; border-radius: 5px;"
                   hx-get="{% if is_my_photos %}/api/buscar-mis-fotos-persona{% else %}/api/buscar-mis-fotos-persona{% endif %}"
                   hx-trigger="change"
                   hx-target="#panel-content"
@@ -36,7 +36,7 @@
             <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
           </div>
         </div>
-        <p class="text-muted mb-0">
+        <p class="text-muted mb-0" style="padding-left: 2em;">
           {% if fotos %}
             <span id="totalPhotos" style="color:white">{{ fotos|length }} foto{{ 's' if fotos|length != 1 else '' }} subida{{ 's' if fotos|length != 1 else '' }} por ti </span>
           {% else %}
