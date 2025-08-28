@@ -387,10 +387,7 @@
         }
       }
 
-      /* Spinner principal - usar animación nativa de Bootstrap */
-      .spinner-border {
-        /* Dejar que Bootstrap maneje la animación de rotación */
-      }
+      
 
       /* Efecto de respiración solo para el contenedor del spinner */
       .loading-indicator .spinner-border {
@@ -563,7 +560,7 @@
     <div
       id="main-content"
       hx-get="/initial-content"
-      hx-trigger="load"
+      hx-trigger="load delay:3000ms"
       hx-swap="innerHTML"
       hx-indicator="#loading-indicator"
     >
