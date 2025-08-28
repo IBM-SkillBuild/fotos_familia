@@ -47,7 +47,7 @@ cloudinary.config(
 
 app = Flask(__name__, static_folder='static')
 app.config.from_object(Config)
-app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/')
+app.wsgi_app = WhiteNoise(app.wsgi_app, root='./')
 
 
 
