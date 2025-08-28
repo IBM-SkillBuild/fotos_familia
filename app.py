@@ -26,6 +26,7 @@ import requests
 import base64
 from io import BytesIO
 import time
+import socket
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -45,6 +46,8 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 año
+# Configurar timeout del socket
+socket.setdefaulttimeout(300)  # 300 segundos = 5 minutos
 app.config['WTF_CSRF_ENABLED'] = False  # Desactivar CSRF para pruebas
 
 # Configurar Rate Limiting
@@ -680,6 +683,9 @@ def get_current_user():
         session.clear()
         return None
 
+@app.route('/health')
+def health_check():
+    return {'status': 'healthy'}, 200
 
 @app.route('/')
 def index():
