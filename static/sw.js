@@ -1,5 +1,5 @@
 // Service Worker para Fotos de Familia PWA
-const CACHE_NAME = 'fotos-familia-v1.0.2'; // Incrementa la versión para forzar actualización
+const CACHE_NAME = 'fotos-familia-v1.0.3'; // Incrementa la versión para forzar actualización
 const STATIC_CACHE = 'static-v1.0.2';
 const DYNAMIC_CACHE = 'dynamic-v1.0.2';
 
