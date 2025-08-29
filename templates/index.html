@@ -460,9 +460,10 @@
     x-data="{ init() { console.log('Alpine Store initialized:', $store.app) } }"
     x-init="init()"
     hx-get="/api/session-warning"
-    hx-trigger="load, every 15s"
+    hx-trigger="every 50s"
     hx-swap="beforeend"
-    hx-indicator="none"
+    hx-timeout="30s"
+    
     style="
       width: 100%;
       min-height: 100vh;
