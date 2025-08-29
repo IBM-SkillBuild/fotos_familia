@@ -118,10 +118,19 @@ def ratelimit_handler(e):
 
 
 # Configuración de la base de datos
-DATABASE = app.config['DATABASE']
+# Configuración de la base de datos
+# Usar ruta absoluta para evitar problemas en diferentes entornos
+DATABASE = os.path.abspath(app.config['DATABASE'])
+app_logger.info(f"Using database path: {DATABASE}")
+
+# Verificar si el archivo de base de datos existe
+if not os.path.exists(DATABASE):
+    app_logger.warning(f"Database file does not exist at {DATABASE}, will be created on init")
+
 
 
 def init_db():
+ try:   
     conn = sqlite3.connect(DATABASE)
 
     # Crear tabla de usuarios
@@ -217,6 +226,11 @@ def init_db():
 
     conn.commit()
     conn.close()
+    app_logger.info("Database initialized successfully")
+ except Exception as e:
+        app_logger.error(f"Error initializing database: {str(e)}")
+        raise
+    
 
 
 def migrate_existing_data(conn):
@@ -301,9 +315,13 @@ def migrate_interaction_data(conn):
 def get_db():
     """Obtener conexión a la base de datos desde el contexto de la aplicación"""
     if 'db' not in g:
-        g.db = sqlite3.connect(DATABASE, check_same_thread=False)
-        g.db.row_factory = sqlite3.Row
-        g.db.execute('PRAGMA journal_mode=WAL;')
+        try:
+            g.db = sqlite3.connect(DATABASE, check_same_thread=False)
+            g.db.row_factory = sqlite3.Row
+            g.db.execute('PRAGMA journal_mode=WAL;')
+        except Exception as e:
+            app_logger.error(f"Error connecting to database at {DATABASE}: {str(e)}")
+            raise
     return g.db
 
 @app.teardown_appcontext
@@ -316,7 +334,6 @@ def close_db(e=None):
 
 def create_user_email(name, email):
     """Crear nuevo usuario con email en la base de datos"""
-    conn = None
     try:
         conn = get_db()
         cursor = conn.execute('''
@@ -336,10 +353,6 @@ def create_user_email(name, email):
     except Exception as e:
         log_error('create_user_email', e, f'Email: {email}')
         return None
-    finally:
-        if conn:
-            pass
-
 
 
 def create_user_session_email(user_id):
