@@ -43,8 +43,11 @@ from whitenoise import WhiteNoise
 cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
     api_key=os.getenv('CLOUDINARY_API_KEY'),
-    api_secret=os.getenv('CLOUDINARY_API_SECRET')
+    api_secret=os.getenv('CLOUDINARY_API_SECRET'),
+    timeout=60,
+    secure=True
 )
+
 
 app = Flask(__name__, static_folder='static')
 app.config.from_object(Config)
@@ -4583,4 +4586,4 @@ def robots_txt():
 if __name__ == '__main__':
     init_db()
     app_logger.info("APLICACION INICIADA")
-    app.run( host='0.0.0.0', port=5000)
+    app.run( host='0.0.0.0', port=8000)
