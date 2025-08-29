@@ -77,12 +77,6 @@ csrf = CSRFProtect(app)
 
 # Manejo de errores de rate limiting
 
-@app.errorhandler(499)
-def client_closed_request(error):
-    """Handle client closed requests (HTTP 499)"""
-    if request.headers.get('HX-Request'):
-        return jsonify({'error': 'Request cancelled'}), 499
-    return render_template('error.html', error='Request cancelled'), 499
 
 @app.errorhandler(429)
 def ratelimit_handler(e):
