@@ -13,7 +13,6 @@ RUN echo "body { background: #fff; }" > /app/static/style.css
 
 # Environment variables
 ENV PORT=8000
-ENV FLASK_ENV=production
 ENV DEBUG=False
 ENV SECRET_KEY=6edcfbe4afa8dfcaf5675d3bf32b54b7815c6f389b5b83f7258e7bd2fcb71b6b
 ENV SMTP_SERVER=smtp.gmail.com
