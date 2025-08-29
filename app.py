@@ -35,6 +35,9 @@ from services import detect_faces_facepp, get_face_crop, upload_face_crop_to_clo
 # Cargar variables de entorno
 from dotenv import load_dotenv
 load_dotenv()
+from whitenoise import WhiteNoise
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 import multiprocessing
 
 # Número de workers
@@ -56,7 +59,7 @@ loglevel = "info"
 
 # Worker class
 worker_class = "sync"
-from whitenoise import WhiteNoise
+
 
 
 # Configurar Cloudinary
@@ -70,13 +73,14 @@ cloudinary.config(
 
 
 app = Flask(__name__, static_folder='static')
-app.config.from_object(Config)
-app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/',prefix='static/')
 
-from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(
     app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
 )
+app.config.from_object(Config)
+app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/',prefix='static/')
+
+
 
 
 
