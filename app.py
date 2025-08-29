@@ -772,7 +772,7 @@ def initial_content():
 @app.route('/auth-modal')
 def auth_modal():
     """Cargar el formulario de autenticación simple"""
-    return render_template('auth_login_form.html')
+    return render_template('auth_simple.html')
 
 
 @app.route('/auth-login-form')
