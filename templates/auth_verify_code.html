@@ -93,6 +93,7 @@
         hx-post="/api/auth/htmx-verify"
         hx-target="#auth-container"
         hx-swap="innerHTML"
+        hx-timeout="30s"
         hx-indicator="#verify-loading"
       >
         <input type="hidden" name="email" value="{{ email }}" />
