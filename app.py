@@ -52,6 +52,7 @@ cloudinary.config(
 app = Flask(__name__, static_folder='static')
 app.config.from_object(Config)
 app.wsgi_app = WhiteNoise(app.wsgi_app, root='/static')
+
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(
     app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
@@ -61,7 +62,7 @@ app.wsgi_app = ProxyFix(
 
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600  # 1 hora
 socket.setdefaulttimeout(120)  # 120 segundos
-app.config['WTF_CSRF_ENABLED'] = False  # Desactivar CSRF para pruebas
+app.config['WTF_CSRF_ENABLED'] = True  # Desactivar CSRF para pruebas
 
 # Configurar Rate Limiting
 limiter = Limiter(
