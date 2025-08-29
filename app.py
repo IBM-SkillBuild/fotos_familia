@@ -86,7 +86,7 @@ app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/',prefix='static/')
 
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600  # 1 hora
 socket.setdefaulttimeout(120)  # 120 segundos
-app.config['WTF_CSRF_ENABLED'] = True  # Desactivar CSRF para pruebas
+app.config['WTF_CSRF_ENABLED'] = False  # Desactivar CSRF para pruebas
 app.config['PREFERRED_URL_SCHEME'] = 'https'
 # Configurar Rate Limiting
 limiter = Limiter(
