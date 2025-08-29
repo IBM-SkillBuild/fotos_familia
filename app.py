@@ -9,7 +9,7 @@ from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf
 from flask_wtf import FlaskForm
 from config import Config
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for,g
+from flask import Flask, abort, render_template, request, jsonify, session, redirect, url_for,g
 import sqlite3
 import secrets
 import hashlib
@@ -31,7 +31,7 @@ import threading
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from services import detect_faces_facepp, get_face_crop, upload_temp_face_crop, get_face_crop_from_facepp
+from services import detect_faces_facepp, get_face_crop, upload_face_crop_to_cloudinary, upload_temp_face_crop, get_face_crop_from_facepp
 # Cargar variables de entorno
 from dotenv import load_dotenv
 load_dotenv()
