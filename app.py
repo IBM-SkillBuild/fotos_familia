@@ -121,7 +121,7 @@ def ratelimit_handler(e):
 # Configuración de la base de datos
 # Usar ruta absoluta para evitar problemas en diferentes entornos
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-DATABASE = os.path.join(BASE_DIR, "instance", "users.db")
+DATABASE = os.path.join(BASE_DIR, "database", "users.db")
 app_logger.info(f"Using database path: {DATABASE}")
 
 # Verificar si el archivo de base de datos existe
