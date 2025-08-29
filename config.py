@@ -9,7 +9,7 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production-2024')
     
     # Configuración de base de datos
-    DATABASE = 'users.db'
+    
     
     # Configuración de sesiones
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
