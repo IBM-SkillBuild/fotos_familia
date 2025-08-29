@@ -38,6 +38,7 @@ load_dotenv()
 
 from whitenoise import WhiteNoise
 
+
 # Configurar Cloudinary
 cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
@@ -47,7 +48,11 @@ cloudinary.config(
 
 app = Flask(__name__, static_folder='static')
 app.config.from_object(Config)
-app.wsgi_app = WhiteNoise(app.wsgi_app, root='./')
+app.wsgi_app = WhiteNoise(app.wsgi_app, root='/static')
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(
+    app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
+)
 
 
 
