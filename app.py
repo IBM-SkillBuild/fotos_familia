@@ -866,6 +866,7 @@ def get_form_data():
 
 
 @app.route('/api/auth/htmx-register', methods=['POST'])
+@csrf.exempt
 @limiter.limit("5 per minute")
 def htmx_register():
     """Wrapper HTMX para registro que guarda código directamente"""
@@ -917,6 +918,7 @@ def htmx_register():
 
 
 @app.route('/api/auth/htmx-login', methods=['POST'])
+@csrf.exempt
 @limiter.limit("10 per minute")
 def htmx_login():
     """Wrapper HTMX para login que guarda código directamente"""
@@ -970,6 +972,7 @@ def htmx_login():
 
 
 @app.route('/api/auth/htmx-verify', methods=['POST'])
+@csrf.exempt
 @limiter.limit("15 per minute")
 def htmx_verify():
     """Wrapper HTMX para verificación que crea sesión directamente"""
