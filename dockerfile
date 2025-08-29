@@ -27,4 +27,5 @@ ENV CLOUDINARY_API_SECRET=ZDRNfSczRreAzKXTFhQgFsGOZ0M
 ENV FACEPP_API_KEY=zWeIYXZKrSdZeFMdv1OszlLc1ahQZDSr
 ENV FACEPP_API_SECRET=2P-w4XH5Dvjmmp6DJr-4BCd9DSMqW4QI
 
-CMD ["gunicorn", "--timeout", "120", "--keep-alive", "20", "--workers", "2", "-b", "0.0.0.0:8000", "app:app"]
+# Updated gunicorn command with better timeout handling
+CMD ["gunicorn", "--timeout", "120", "--keep-alive", "5", "--workers", "2", "--max-requests", "1000", "--max-requests-jitter", "100", "-b", "0.0.0.0:8000", "app:app"]

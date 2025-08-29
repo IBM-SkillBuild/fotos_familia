@@ -35,7 +35,27 @@ from services import detect_faces_facepp, get_face_crop, upload_face_crop_to_clo
 # Cargar variables de entorno
 from dotenv import load_dotenv
 load_dotenv()
+import multiprocessing
 
+# Número de workers
+workers = multiprocessing.cpu_count() * 2 + 1
+threads = 4 # Añadido para manejar más peticiones concurrentes
+
+# Timeouts
+timeout = 120  # 120 segundos
+keepalive = 5
+
+# Graceful restart settings
+max_requests = 1000
+max_requests_jitter = 100
+
+# Logs
+accesslog = "-"
+errorlog = "-"
+loglevel = "info"
+
+# Worker class
+worker_class = "sync"
 from whitenoise import WhiteNoise
 
 
@@ -63,7 +83,7 @@ app.wsgi_app = ProxyFix(
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600  # 1 hora
 socket.setdefaulttimeout(120)  # 120 segundos
 app.config['WTF_CSRF_ENABLED'] = True  # Desactivar CSRF para pruebas
-
+app.config['PREFERRED_URL_SCHEME'] = 'https'
 # Configurar Rate Limiting
 limiter = Limiter(
     app=app,
