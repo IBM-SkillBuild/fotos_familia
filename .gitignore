@@ -21,7 +21,7 @@ var/
 *.egg
 
 # Flask
-instance/
+
 .webassets-cache
 
 # Entornos virtuales
