@@ -30,7 +30,7 @@ import socket
 import threading
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
+import traceback
 from services import detect_faces_facepp, get_face_crop, upload_face_crop_to_cloudinary, upload_temp_face_crop, get_face_crop_from_facepp
 # Cargar variables de entorno
 from dotenv import load_dotenv
@@ -923,52 +923,169 @@ def htmx_register():
 def htmx_login():
     """Wrapper HTMX para login que guarda código directamente"""
     app_logger.info('htmx_login function started')
+    
     try:
         email = request.form.get('email', '').strip()
+        app_logger.info(f'Login attempt for email: {email}')
 
         if not email:
-            return render_template('auth_login_form.html')
+            app_logger.warning('Email not provided')
+            return render_template('auth_login_form.html', error="El email es requerido")
 
         # Verificar que el email existe
-        conn = get_db()
-        existing_user = conn.execute(
-            'SELECT id, name FROM users WHERE email = ?', (email,)).fetchone()
+        conn = None
+        try:
+            conn = get_db()
+            existing_user = conn.execute(
+                'SELECT id, name FROM users WHERE email = ?', (email,)
+            ).fetchone()
 
-        if not existing_user:
+            if not existing_user:
+                app_logger.warning(f'User not found for email: {email}')
+                return render_template('auth_user_not_found.html', email=email)
 
-            return render_template('auth_user_not_found.html', email=email)
+            # Generar código de verificación
+            verification_code = str(secrets.randbelow(900000) + 100000)
+            code_expires = datetime.now() + timedelta(minutes=10)
 
-        # Generar código de verificación
-        verification_code = str(secrets.randbelow(900000) + 100000)
-        code_expires = datetime.now() + timedelta(minutes=10)
+            app_logger.info(f'Generated verification code for {email}: {verification_code}')
 
-        print(
-            f"DEBUG LOGIN: Generando código '{verification_code}' para {email}")
-        print(f"DEBUG LOGIN: Expira en: {code_expires}")
+            # Actualizar usuario con código
+            conn.execute('''
+                UPDATE users 
+                SET verification_code = ?, code_expires = ?, updated_at = ?
+                WHERE email = ?
+            ''', (verification_code, code_expires, datetime.now(), email))
 
-        # Actualizar usuario con código
-        conn.execute('''
-            UPDATE users 
-            SET verification_code = ?, code_expires = ?, updated_at = ?
-            WHERE email = ?
-        ''', (verification_code, code_expires, datetime.now(), email))
+            conn.commit()
+            app_logger.info('Database updated successfully')
 
-        conn.commit()
-
+        except sqlite3.Error as db_error:
+            app_logger.error(f'Database error: {db_error}')
+            if conn:
+                conn.rollback()
+            return render_template('auth_login_form.html', error="Error interno de base de datos. Inténtalo de nuevo.")
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except:
+                    pass
 
         # Enviar código por email
-        email_sent = send_verification_email(
-            email, verification_code, existing_user['name'])
-        if not email_sent:
-            print(
-                f"⚠️ No se pudo enviar email a {email}, pero continuando con el proceso")
+        try:
+            email_sent = send_verification_email(
+                email, verification_code, existing_user['name']
+            )
+            
+            if not email_sent:
+                app_logger.error(f'Failed to send email to: {email}')
+                # En modo desarrollo, mostrar el código
+                if app.debug:
+                    app_logger.warning(f'DEBUG MODE - Code for {email}: {verification_code}')
+                    return render_template('auth_verify_simple.html', 
+                                         email=email, 
+                                         flow_type='login',
+                                         debug_code=verification_code)
+                else:
+                    return render_template('auth_login_form.html', 
+                                         error="Error enviando el código. Inténtalo de nuevo.")
+
+            app_logger.info(f'Email sent successfully to: {email}')
+
+        except Exception as email_error:
+            app_logger.error(f'Email sending error: {email_error}')
+            if app.debug:
+                # En modo debug, permitir continuar con el código visible
+                return render_template('auth_verify_simple.html', 
+                                     email=email, 
+                                     flow_type='login',
+                                     debug_code=verification_code)
+            else:
+                return render_template('auth_login_form.html', 
+                                     error="Error del servicio de email. Inténtalo de nuevo.")
 
         # Mostrar verificación
-        return render_template('auth_verify_simple.html', email=email, flow_type='login')
+        return render_template('auth_verify_simple.html', 
+                             email=email, 
+                             flow_type='login')
 
     except Exception as e:
-        log_error('htmx_login', e, f'Email: {email}')
-        return render_template('auth_login_form.html', error="Error interno del servidor. Inténtalo de nuevo.")
+        app_logger.error(f'Unexpected error in htmx_login: {e}')
+        app_logger.error(traceback.format_exc())
+        
+        return render_template('auth_login_form.html', 
+                             error="Error interno del servidor. Inténtalo de nuevo.")
+
+# Función mejorada para enviar emails
+def send_verification_email(email, code, name="Usuario"):
+    """Enviar código de verificación por email - Versión mejorada"""
+    try:
+        smtp_server = os.getenv('SMTP_SERVER')
+        smtp_port = int(os.getenv('SMTP_PORT', 587))
+        smtp_email = os.getenv('SMTP_EMAIL')
+        smtp_password = os.getenv('SMTP_PASSWORD')
+        
+        app_logger.info(f'Attempting to send email to: {email}')
+
+        if not all([smtp_server, smtp_email, smtp_password]):
+            app_logger.error('SMTP configuration incomplete')
+            return False
+
+        # Crear mensaje
+        msg = MIMEMultipart('alternative')
+        msg['From'] = f"Auth App <{smtp_email}>"
+        msg['To'] = email
+        msg['Subject'] = f"Tu código de verificación: {code}"
+
+        # Cuerpo del email
+        html_body = f"""
+        <!DOCTYPE html>
+        <html>
+        <body style="margin: 0; padding: 20px; font-family: Arial, sans-serif;">
+            <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 15px; padding: 20px;">
+                <h2>Tu código de verificación</h2>
+                <p>Hola {name}, usa este código para iniciar sesión:</p>
+                <div style="font-size: 24px; font-weight: bold; color: #007bff;">
+                    {code}
+                </div>
+                <p>Este código expira en 10 minutos.</p>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_body = f"""
+        Hola {name},
+
+        Tu código de verificación es: {code}
+
+        Este código expira en 10 minutos.
+
+        Saludos,
+        Auth App
+        """
+
+        msg.attach(MIMEText(text_body, 'plain'))
+        msg.attach(MIMEText(html_body, 'html'))
+
+        # Enviar email
+        if smtp_port == 465:
+            server = smtplib.SMTP_SSL(smtp_server, smtp_port)
+        else:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+
+        server.login(smtp_email, smtp_password)
+        server.send_message(msg)
+        server.quit()
+
+        app_logger.info(f'Email successfully sent to: {email}')
+        return True
+
+    except Exception as e:
+        app_logger.error(f'Error sending email to {email}: {e}')
+        return False
 
 
 @app.route('/api/auth/htmx-verify', methods=['POST'])
