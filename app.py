@@ -9,7 +9,6 @@ from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf
 from flask_wtf import FlaskForm
 from config import Config
 from flask import Flask, abort, render_template, request, jsonify, session, redirect, url_for,g
-import sqlite3
 import psycopg2
 import secrets
 import hashlib
@@ -45,7 +44,7 @@ workers = multiprocessing.cpu_count() * 2 + 1
 threads = 4 # Añadido para manejar más peticiones concurrentes
 
 # Timeouts
-timeout = 120  # 120 segundos
+timeout = 300  # 120 segundos
 keepalive = 5
 
 # Graceful restart settings
@@ -99,19 +98,36 @@ DATABASE_CONFIG = {
     'database': os.getenv('DATABASE_NAME', 'koyebdb'),
     'user': os.getenv('DATABASE_USER', 'koyeb-adm'),
     'password': os.getenv('DATABASE_PASSWORD', 'npg_dGpMKX9j8qnm'),
-    'port': os.getenv('DATABASE_PORT', '5432')
+    'port': os.getenv('DATABASE_PORT', '5432'),
+    'connect_timeout': 10,
+    'sslmode': 'require'
 }
-
 app_logger.info(f"Using PostgreSQL database: {DATABASE_CONFIG['host']}")
 
 def get_db():
     """Obtener conexión a la base de datos PostgreSQL"""
     if 'db' not in g:
         try:
-            g.db = psycopg2.connect(**DATABASE_CONFIG)
+            app_logger.info(f"Conectando a PostgreSQL con host: {DATABASE_CONFIG['host']}")
+            g.db = psycopg2.connect(
+                host=DATABASE_CONFIG['host'],
+                database=DATABASE_CONFIG['database'],
+                user=DATABASE_CONFIG['user'],
+                password=DATABASE_CONFIG['password'],
+                port=DATABASE_CONFIG['port'],
+                connect_timeout=DATABASE_CONFIG.get('connect_timeout', 10),
+                sslmode=DATABASE_CONFIG.get('sslmode', 'require')
+            )
             g.db.autocommit = True
+            app_logger.info("Conexión a PostgreSQL establecida exitosamente")
+        except psycopg2.OperationalError as e:
+            app_logger.error(f"Error de conexión operacional a PostgreSQL: {str(e)}")
+            raise
+        except psycopg2.DatabaseError as e:
+            app_logger.error(f"Error de base de datos en PostgreSQL: {str(e)}")
+            raise
         except Exception as e:
-            app_logger.error(f"Error connecting to PostgreSQL database: {str(e)}")
+            app_logger.error(f"Error inesperado conectando a PostgreSQL: {str(e)}")
             raise
     return g.db
 
@@ -871,16 +887,17 @@ def htmx_login():
 @limiter.limit("15 per minute")
 def htmx_verify():
     """Wrapper HTMX para verificación que crea sesión directamente"""
+    email = None
     try:
         email = request.form.get('email', '').strip()
         code = request.form.get('code', '').strip()
 
-        print(
+        app_logger.info(
             f"DEBUG VERIFY: Iniciando verificación para email='{email}', code='{code}'")
-        print(f"DEBUG VERIFY: Form data: {dict(request.form)}")
+        app_logger.info(f"DEBUG VERIFY: Form data: {dict(request.form)}")
 
         if not email or not code:
-            print(
+            app_logger.warning(
                 f"DEBUG VERIFY: Faltan datos - email='{email}', code='{code}'")
             return render_template('auth_verify_simple.html',
                                    email=email,
@@ -888,67 +905,92 @@ def htmx_verify():
                                    flow_type='login')
 
         # Verificar código directamente en la base de datos
+        app_logger.info("Obteniendo conexión a la base de datos")
         conn = get_db()
         cursor = conn.cursor()
+        app_logger.info("Conexión a la base de datos obtenida exitosamente")
 
         # Primero buscar el usuario por email para debug
+        app_logger.info(f"Buscando usuario con email: {email}")
         cursor.execute('''
             SELECT id, name, email, verification_code, code_expires 
             FROM users 
             WHERE email = %s
         ''', (email,))
         debug_user = cursor.fetchone()
-
-        print(
+        app_logger.info(
             f"DEBUG VERIFY: Usuario encontrado: {debug_user if debug_user else 'None'}")
-        print(f"DEBUG VERIFY: Código recibido: '{code}'")
-        print(
-            f"DEBUG VERIFY: Código en DB: '{debug_user[3] if debug_user else 'None'}'")
-        print(
-            f"DEBUG VERIFY: Expira en: {debug_user[4] if debug_user else 'None'}")
-        print(f"DEBUG VERIFY: Hora actual: {datetime.now()}")
 
+        if debug_user:
+            app_logger.info(f"DEBUG VERIFY: Código recibido: '{code}'")
+            app_logger.info(
+                f"DEBUG VERIFY: Código en DB: '{debug_user[3] if debug_user else 'None'}'")
+            app_logger.info(
+                f"DEBUG VERIFY: Expira en: {debug_user[4] if debug_user else 'None'}")
+        app_logger.info(f"DEBUG VERIFY: Hora actual: {datetime.now()}")
+
+        app_logger.info("Verificando código de verificación")
         cursor.execute('''
             SELECT id, name, verification_code, code_expires 
             FROM users 
             WHERE email = %s AND verification_code = %s AND code_expires > %s
         ''', (email, code, datetime.now()))
         user = cursor.fetchone()
+        app_logger.info(f"Resultado de verificación: {user is not None}")
 
         if not user:
+            app_logger.warning(f"Código incorrecto o expirado para email {email}")
             return render_template('auth_verify_simple.html',
                                    email=email,
                                    error="Código incorrecto o expirado",
                                    flow_type='login')
 
         # Limpiar código de verificación
+        app_logger.info("Limpiando código de verificación")
         cursor.execute('''
             UPDATE users 
             SET verification_code = NULL, code_expires = NULL, updated_at = %s
             WHERE id = %s
         ''', (datetime.now(), user[0]))
         conn.commit()
+        app_logger.info("Código de verificación limpiado exitosamente")
 
         user_id = user[0]
 
         # Crear sesión
+        app_logger.info(f"Creando sesión para usuario {user_id}")
         access_token = create_user_session_email(user_id)
         if not access_token:
+            app_logger.error(f"Error creando sesión para usuario {user_id}")
             return render_template('auth_verify_simple.html',
                                    email=email,
                                    error="Error creando sesión",
                                    flow_type='login')
+        app_logger.info("Sesión creada exitosamente")
 
         log_user_action(user_id, 'LOGIN_SUCCESS', f'Email: {email}')
 
         # Retornar template de éxito
+        app_logger.info("Retornando auth_success.html")
         return render_template('auth_success.html')
 
-    except Exception as e:
-        log_error('htmx_verify', e, f'Email: {email}')
+    except psycopg2.OperationalError as e:
+        app_logger.error(f'Error de conexión a la base de datos para email {email}: {str(e)}')
         return render_template('auth_verify_simple.html',
                                email=email,
-                               error="Error al verificar el código",
+                               error="Error de conexión a la base de datos. Inténtalo de nuevo.",
+                               flow_type='login')
+    except psycopg2.DatabaseError as e:
+        app_logger.error(f'Error de base de datos para email {email}: {str(e)}')
+        return render_template('auth_verify_simple.html',
+                               email=email,
+                               error="Error en la base de datos. Inténtalo de nuevo.",
+                               flow_type='login')
+    except Exception as e:
+        app_logger.error(f'htmx_verify error for email {email}: {str(e)}', exc_info=True)
+        return render_template('auth_verify_simple.html',
+                               email=email,
+                               error="Error al verificar el código. Inténtalo de nuevo.",
                                flow_type='login')
 
 @app.route('/debug-session')
