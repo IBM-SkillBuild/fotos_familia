@@ -1,3 +1,4 @@
+
 from logger_config import (
     app_logger, log_request, log_response, log_error,
     log_user_action, log_session_event, log_database_operation
@@ -60,6 +61,8 @@ loglevel = "info"
 # Worker class
 worker_class = "sync"
 
+
+
 # Configurar Cloudinary
 cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
@@ -69,6 +72,7 @@ cloudinary.config(
     secure=True
 )
 
+
 app = Flask(__name__, static_folder='static')
 
 app.wsgi_app = ProxyFix(
@@ -77,11 +81,14 @@ app.wsgi_app = ProxyFix(
 app.config.from_object(Config)
 app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/',prefix='static/')
 
+
+
+
+
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600  # 1 hora
 socket.setdefaulttimeout(120)  # 120 segundos
 app.config['WTF_CSRF_ENABLED'] = False  # Desactivar CSRF para pruebas
 app.config['PREFERRED_URL_SCHEME'] = 'https'
-
 # Configurar Rate Limiting
 limiter = Limiter(
     app=app,
@@ -93,155 +100,9 @@ limiter = Limiter(
 # Configurar protección CSRF
 csrf = CSRFProtect(app)
 
-# Configuración de la base de datos PostgreSQL
-DATABASE_CONFIG = {
-    'host': os.getenv('DATABASE_HOST', 'ep-divine-sea-a2tsh7q5.eu-central-1.pg.koyeb.app'),
-    'database': os.getenv('DATABASE_NAME', 'koyebdb'),
-    'user': os.getenv('DATABASE_USER', 'koyeb-adm'),
-    'password': os.getenv('DATABASE_PASSWORD', 'npg_dGpMKX9j8qnm'),
-    'port': os.getenv('DATABASE_PORT', '5432')
-}
-
-app_logger.info(f"Using PostgreSQL database: {DATABASE_CONFIG['host']}")
-
-def get_db():
-    """Obtener conexión a la base de datos PostgreSQL"""
-    if 'db' not in g:
-        try:
-            g.db = psycopg2.connect(**DATABASE_CONFIG)
-            g.db.autocommit = True
-        except Exception as e:
-            app_logger.error(f"Error connecting to PostgreSQL database: {str(e)}")
-            raise
-    return g.db
-
-@app.teardown_appcontext
-def close_db(e=None):
-    """Cerrar la conexión a la base de datos al final de la petición"""
-    db = g.pop('db', None)
-    if db is not None:
-        db.close()
-
-def init_db():
-    """Inicializar la base de datos PostgreSQL"""
-    try:
-        conn = get_db()
-        cursor = conn.cursor()
-
-        # Crear tabla de usuarios
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                name TEXT NOT NULL,
-                alias TEXT,
-                phone TEXT,
-                email TEXT,
-                access_token TEXT,
-                token_expires TIMESTAMP,
-                verification_code TEXT,
-                code_expires TIMESTAMP,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                last_interaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                total_interaction_days INTEGER DEFAULT 1
-            )
-        ''')
-
-        # Crear tabla de sesiones
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS sessions (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER,
-                token TEXT UNIQUE,
-                expires TIMESTAMP,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-            )
-        ''')
-
-        # Crear tabla de códigos de verificación
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS verification_codes (
-                id SERIAL PRIMARY KEY,
-                email TEXT NOT NULL,
-                name TEXT,
-                code TEXT NOT NULL,
-                expires TIMESTAMP NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-
-        # Crear tabla de fotos
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS photos (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER NOT NULL,
-                nombre TEXT,
-                nombre_archivo TEXT NOT NULL,
-                categoria TEXT,
-                mes INTEGER,
-                año INTEGER,
-                personas_ids TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-            )
-        ''')
-
-        # Crear tabla de personas
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS personas (
-                id SERIAL PRIMARY KEY,
-                nombre TEXT NOT NULL,
-                imagen TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-
-        # Crear tabla para solicitudes de cambio de email
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS email_change_requests (
-                user_id INTEGER PRIMARY KEY,
-                new_email TEXT NOT NULL,
-                verification_code TEXT NOT NULL,
-                expires TIMESTAMP NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users (id)
-            )
-        ''')
-
-        # Crear tabla para verificaciones de email
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS email_verification (
-                email TEXT PRIMARY KEY,
-                name TEXT,
-                code TEXT,
-                expires TIMESTAMP,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-
-        # Crear índices para optimizar consultas
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_verification_codes_email ON verification_codes(email)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_verification_codes_code ON verification_codes(code)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_photos_user_id ON photos(user_id)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_photos_año ON photos(año)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_photos_mes ON photos(mes)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_personas_nombre ON personas(nombre)')
-
-        conn.commit()
-        app_logger.info("PostgreSQL database initialized successfully")
-        
-    except Exception as e:
-        app_logger.error(f"Error initializing PostgreSQL database: {str(e)}")
-        raise
-
 # Manejo de errores de rate limiting
+
+
 @app.errorhandler(429)
 def ratelimit_handler(e):
     """Manejo personalizado de errores de rate limiting"""
@@ -256,41 +117,258 @@ def ratelimit_handler(e):
                            description=e.description,
                            retry_after=e.retry_after), 429
 
+
+# Configuración de la base de datos
+# Configuración de la base de datos
+# Usar ruta absoluta para evitar problemas en diferentes entornos
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DATABASE = os.path.join(BASE_DIR, "database", "users.db")
+app_logger.info(f"Using database path: {DATABASE}")
+
+# Verificar si el archivo de base de datos existe
+if not os.path.exists(DATABASE):
+    app_logger.warning(f"Database file does not exist at {DATABASE}, will be created on init")
+
+
+
+def init_db():
+ try:   
+    conn = sqlite3.connect(DATABASE)
+
+    # Crear tabla de usuarios
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            alias TEXT,
+            phone TEXT,
+            email TEXT,
+            access_token TEXT,
+            token_expires DATETIME,
+            verification_code TEXT,
+            code_expires DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_interaction_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            total_interaction_days INTEGER DEFAULT 1
+        )
+    ''')
+
+    # Crear tabla de sesiones
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            token TEXT UNIQUE,
+            expires DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+
+    # Crear tabla de códigos de verificación
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS verification_codes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            name TEXT,
+            code TEXT NOT NULL,
+            expires DATETIME NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Crear tabla de fotos
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS photos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            nombre TEXT,
+            nombre_archivo TEXT NOT NULL,
+            categoria TEXT,
+            mes INTEGER,
+            año INTEGER,
+            personas_ids TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        )
+    ''')
+
+    # Crear tabla de personas
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS personas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            imagen TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Crear índices para optimizar consultas
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone)')
+    conn.execute(
+        'CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)')
+    conn.execute(
+        'CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token)')
+    conn.execute(
+        'CREATE INDEX IF NOT EXISTS idx_verification_codes_email ON verification_codes(email)')
+    conn.execute(
+        'CREATE INDEX IF NOT EXISTS idx_verification_codes_code ON verification_codes(code)')
+    conn.execute(
+        'CREATE INDEX IF NOT EXISTS idx_photos_user_id ON photos(user_id)')
+    conn.execute(
+        'CREATE INDEX IF NOT EXISTS idx_photos_año ON photos(año)')
+    conn.execute(
+        'CREATE INDEX IF NOT EXISTS idx_photos_mes ON photos(mes)')
+    conn.execute(
+        'CREATE INDEX IF NOT EXISTS idx_personas_nombre ON personas(nombre)')
+
+    conn.commit()
+    conn.close()
+    app_logger.info("Database initialized successfully")
+ except Exception as e:
+        app_logger.error(f"Error initializing database: {str(e)}")
+        raise
+    
+
+
+def migrate_existing_data(conn):
+    """Migrar datos existentes para compatibilidad"""
+    try:
+        # Verificar qué columnas existen
+        cursor = conn.execute("PRAGMA table_info(users)")
+        columns = [column[1] for column in cursor.fetchall()]
+
+        # Agregar columnas que falten
+        if 'name' not in columns:
+            conn.execute('ALTER TABLE users ADD COLUMN name TEXT')
+            print("[MIGRATION] Agregada columna 'name'")
+
+        if 'email' not in columns:
+            conn.execute('ALTER TABLE users ADD COLUMN email TEXT')
+            print("[MIGRATION] Agregada columna 'email'")
+
+        if 'updated_at' not in columns:
+            conn.execute(
+                'ALTER TABLE users ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP')
+            print("[MIGRATION] Agregada columna 'updated_at'")
+
+        # Migrar datos existentes: usar alias como name si name está vacío
+        conn.execute(
+            'UPDATE users SET name = alias WHERE name IS NULL OR name = ""')
+        # Limpiar alias duplicado - si name y alias son iguales, limpiar alias
+        conn.execute('UPDATE users SET alias = NULL WHERE name = alias')
+        conn.execute(
+            'UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL')
+
+        # Migración para tabla photos
+        cursor = conn.execute("PRAGMA table_info(photos)")
+        photo_columns = [column[1] for column in cursor.fetchall()]
+
+        if 'nombre_archivo' not in photo_columns:
+            conn.execute('ALTER TABLE photos ADD COLUMN nombre_archivo TEXT')
+            print("[MIGRATION] Agregada columna 'nombre_archivo' a tabla photos")
+
+            # Para registros existentes, usar el campo 'nombre' como nombre_archivo si existe
+            conn.execute(
+                'UPDATE photos SET nombre_archivo = nombre WHERE nombre_archivo IS NULL AND nombre IS NOT NULL')
+            print("[MIGRATION] Migrados nombres de archivo existentes")
+
+        if 'personas_ids' not in photo_columns:
+            conn.execute('ALTER TABLE photos ADD COLUMN personas_ids TEXT')
+            print("[MIGRATION] Agregada columna 'personas_ids' a tabla photos")
+
+        print("[MIGRATION] Migración completada exitosamente")
+
+    except Exception as e:
+        print(f"[MIGRATION] Error en migración: {e}")
+        # Continuar sin fallar
+
+
+def migrate_interaction_data(conn):
+    """Migrar datos de interacción para compatibilidad"""
+    try:
+        cursor = conn.execute("PRAGMA table_info(users)")
+        columns = [column[1] for column in cursor.fetchall()]
+
+        if 'last_interaction_date' not in columns:
+            conn.execute(
+                'ALTER TABLE users ADD COLUMN last_interaction_date DATETIME DEFAULT CURRENT_TIMESTAMP')
+            print("[MIGRATION] Agregada columna 'last_interaction_date'")
+
+        if 'total_interaction_days' not in columns:
+            conn.execute(
+                'ALTER TABLE users ADD COLUMN total_interaction_days INTEGER DEFAULT 1')
+            print("[MIGRATION] Agregada columna 'total_interaction_days'")
+            # For existing users, initialize total_interaction_days to 1 and last_interaction_date to created_at
+            conn.execute(
+                'UPDATE users SET total_interaction_days = 1, last_interaction_date = created_at WHERE total_interaction_days IS NULL')
+            print(
+                "[MIGRATION] Inicializados 'total_interaction_days' y 'last_interaction_date' para usuarios existentes")
+
+        conn.commit()
+    except Exception as e:
+        print(f"[MIGRATION] Error en migración de datos de interacción: {e}")
+
+
+def get_db():
+    """Obtener conexión a la base de datos desde el contexto de la aplicación"""
+    if 'db' not in g:
+        try:
+            g.db = sqlite3.connect(DATABASE, check_same_thread=False)
+            g.db.row_factory = sqlite3.Row
+            g.db.execute('PRAGMA journal_mode=WAL;')
+        except Exception as e:
+            app_logger.error(f"Error connecting to database at {DATABASE}: {str(e)}")
+            raise
+    return g.db
+
+@app.teardown_appcontext
+def close_db(e=None):
+    """Cerrar la conexión a la base de datos al final de la petición"""
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
+
+
 def create_user_email(name, email):
     """Crear nuevo usuario con email en la base de datos"""
     try:
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute('''
+        cursor = conn.execute('''
             INSERT INTO users (name, email, created_at, updated_at)
-            VALUES (%s, %s, %s, %s)
-            RETURNING id
+            VALUES (?, ?, ?, ?)
         ''', (name, email, datetime.now(), datetime.now()))
 
-        user_id = cursor.fetchone()[0]
+        user_id = cursor.lastrowid
         conn.commit()
-        log_database_operation('INSERT', 'users', f'Email: {email}, ID: {user_id}')
+        log_database_operation(
+            'INSERT', 'users', f'Email: {email}, ID: {user_id}')
         return user_id
 
-    except psycopg2.IntegrityError as e:
+    except sqlite3.IntegrityError as e:
         log_error('create_user_email', e, f'Email: {email}')
         return None
     except Exception as e:
         log_error('create_user_email', e, f'Email: {email}')
         return None
 
+
 def create_user_session_email(user_id):
     """Crear sesión segura para usuario autenticado con email"""
+    conn = None
     try:
         access_token = secrets.token_urlsafe(32)
         token_expires = datetime.now() + timedelta(hours=8)
 
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute('''
+        conn.execute('''
             UPDATE users 
-            SET access_token = %s, token_expires = %s, updated_at = %s
-            WHERE id = %s
+            SET access_token = ?, token_expires = ?, updated_at = ?
+            WHERE id = ?
         ''', (access_token, token_expires, datetime.now(), user_id))
         conn.commit()
 
@@ -299,77 +377,95 @@ def create_user_session_email(user_id):
         session['user_id'] = user_id
         session['access_token'] = access_token
 
-        log_database_operation('UPDATE', 'users', f'Session created for user {user_id}')
+        log_database_operation(
+            'UPDATE', 'users', f'Session created for user {user_id}')
         return access_token
 
     except Exception as e:
         log_error('create_user_session_email', e, f'User ID: {user_id}')
         return None
+    
+
+
 
 def store_verification_code(email, name, code):
     """Almacenar código de verificación en la base de datos"""
+    conn = None
     try:
         conn = get_db()
-        cursor = conn.cursor()
         expires = datetime.now() + timedelta(minutes=10)  # Código válido por 10 minutos
 
         # Limpiar códigos anteriores para este email
-        cursor.execute('DELETE FROM verification_codes WHERE email = %s', (email,))
+        conn.execute(
+            'DELETE FROM verification_codes WHERE email = ?', (email,))
 
         # Insertar nuevo código
-        cursor.execute('''
+        conn.execute('''
             INSERT INTO verification_codes (email, name, code, expires)
-            VALUES (%s, %s, %s, %s)
+            VALUES (?, ?, ?, ?)
         ''', (email, name, code, expires))
 
         conn.commit()
-        log_database_operation('INSERT', 'verification_codes', f'Email: {email}')
+        log_database_operation(
+            'INSERT', 'verification_codes', f'Email: {email}')
         return True
 
     except Exception as e:
         log_error('store_verification_code', e, f'Email: {email}')
         return False
+    
+
+
 
 def verify_code(email, code):
     """Verificar código de verificación desde la base de datos"""
+    conn = None
     try:
         conn = get_db()
-        cursor = conn.cursor()
 
         # Buscar código válido
-        cursor.execute('''
+        result = conn.execute('''
             SELECT name FROM verification_codes 
-            WHERE email = %s AND code = %s AND expires > %s
-        ''', (email, code, datetime.now()))
-        result = cursor.fetchone()
+            WHERE email = ? AND code = ? AND expires > ?
+        ''', (email, code, datetime.now())).fetchone()
 
         if result:
             # Limpiar código usado
-            cursor.execute('DELETE FROM verification_codes WHERE email = %s AND code = %s', (email, code))
+            conn.execute(
+                'DELETE FROM verification_codes WHERE email = ? AND code = ?', (email, code))
             conn.commit()
-            log_database_operation('DELETE', 'verification_codes', f'Email: {email}, Code verified')
-            return result[0]  # PostgreSQL devuelve tuplas
+            log_database_operation(
+                'DELETE', 'verification_codes', f'Email: {email}, Code verified')
+            return result['name']
 
         return None
 
     except Exception as e:
         log_error('verify_code', e, f'Email: {email}')
         return None
+    
+
+
 
 def cleanup_expired_codes():
     """Limpiar códigos de verificación expirados"""
+    conn = None
     try:
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute('DELETE FROM verification_codes WHERE expires <= %s', (datetime.now(),))
-        deleted_count = cursor.rowcount
+        conn.execute(
+            'DELETE FROM verification_codes WHERE expires <= ?', (datetime.now(),))
+        deleted_count = conn.total_changes
         conn.commit()
 
         if deleted_count > 0:
-            log_database_operation('DELETE', 'verification_codes', f'Cleaned {deleted_count} expired codes')
+            log_database_operation(
+                'DELETE', 'verification_codes', f'Cleaned {deleted_count} expired codes')
 
     except Exception as e:
         log_error('cleanup_expired_codes', e, 'Cleanup failed')
+    
+
+
 
 def update_interaction_days(user_id):
     """Actualiza los días de interacción del usuario."""
@@ -380,20 +476,21 @@ def update_interaction_days(user_id):
 
         # Obtener la última fecha de interacción y los días totales
         cursor.execute(
-            "SELECT last_interaction_date, total_interaction_days FROM users WHERE id = %s", (user_id,))
+            "SELECT last_interaction_date, total_interaction_days FROM users WHERE id = ?", (user_id,))
         result = cursor.fetchone()
 
         if result:
-            last_interaction_date_str = result[0]
-            total_interaction_days = result[1]
+            last_interaction_date_str = result['last_interaction_date']
+            total_interaction_days = result['total_interaction_days']
 
-            last_interaction_date = last_interaction_date_str
+            last_interaction_date = datetime.fromisoformat(
+                last_interaction_date_str)
             today = datetime.now().date()
 
             if last_interaction_date.date() < today:
                 # Si la última interacción fue en un día diferente, incrementar el contador
                 total_interaction_days += 1
-                cursor.execute("UPDATE users SET last_interaction_date = %s, total_interaction_days = %s WHERE id = %s",
+                cursor.execute("UPDATE users SET last_interaction_date = ?, total_interaction_days = ? WHERE id = ?",
                                (datetime.now(), total_interaction_days, user_id))
                 conn.commit()
                 app_logger.info(
@@ -405,6 +502,9 @@ def update_interaction_days(user_id):
     except Exception as e:
         app_logger.error(
             f"Error updating interaction days for user {user_id}: {e}")
+    
+
+
 
 def upload_to_cloudinary(file, user_id, original_filename):
     """Subir archivo a Cloudinary y retornar URL"""
@@ -451,6 +551,7 @@ def upload_to_cloudinary(file, user_id, original_filename):
             'error': str(e)
         }
 
+
 def delete_from_cloudinary(public_id):
     """Eliminar foto de Cloudinary"""
     try:
@@ -459,6 +560,7 @@ def delete_from_cloudinary(public_id):
     except Exception as e:
         print(f"Error eliminando de Cloudinary: {e}")
         return False
+
 
 def send_verification_email(email, code, name="Usuario"):
     """Enviar código de verificación por email"""
@@ -575,11 +677,13 @@ Saludos,
         print(f"Error enviando email: {e}")
         return False
 
+
 def get_user_display_name(user):
     """Obtener el mejor nombre disponible para mostrar"""
     if not user:
         return 'Usuario'
     return user['name'] or 'Usuario'
+
 
 def require_auth(f):
     """Decorador para requerir autenticación en endpoints"""
@@ -600,6 +704,7 @@ def require_auth(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
 def require_debug(f):
     """Decorador para requerir modo debug"""
     @wraps(f)
@@ -608,6 +713,8 @@ def require_debug(f):
             return "Solo disponible en modo debug", 403
         return f(*args, **kwargs)
     return decorated_function
+
+
 
 def get_current_user():
     """Obtener usuario actual de la sesión"""
@@ -618,22 +725,21 @@ def get_current_user():
     access_token = session['access_token']
 
     conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute('''
+    user_row = conn.execute('''
         SELECT * FROM users 
-        WHERE id = %s AND access_token = %s AND token_expires > %s
-    ''', (user_id, access_token, datetime.now()))
-    user_row = cursor.fetchone()
+        WHERE id = ? AND access_token = ? AND token_expires > ?
+    ''', (user_id, access_token, datetime.now())).fetchone()
     
     if user_row:
-        # Convert row to dict
-        columns = [desc[0] for desc in cursor.description]
-        user = dict(zip(columns, user_row))
+        # Convert row to dict before closing connection
+        user = dict(user_row)
         return user
     else:
+        conn.close()
         # Limpiar sesión inválida
         session.clear()
         return None
+
 
 @app.route('/health')
 def health_check():
@@ -648,11 +754,13 @@ def index():
     # Siempre renderizar el index.html base
     return render_template('index.html')
 
+
 # === RUTAS PWA ===
 @app.route('/static/manifest.json')
 def manifest():
     """Servir el manifest.json para PWA"""
     return app.send_static_file('manifest.json')
+
 
 @app.route('/static/sw.js')
 def service_worker():
@@ -661,6 +769,7 @@ def service_worker():
     response.headers['Content-Type'] = 'application/javascript'
     response.headers['Service-Worker-Allowed'] = '/'
     return response
+
 
 @app.route('/offline')
 def offline():
@@ -686,6 +795,7 @@ def offline():
     </html>
     '''
 
+
 @app.route('/initial-content')
 def initial_content():
     # Verificar si el usuario ya está autenticado
@@ -697,20 +807,24 @@ def initial_content():
         # Usuario no autenticado → cargar página de auth
         return render_template('auth_page_content.html')
 
+
 @app.route('/auth-modal')
 def auth_modal():
     """Cargar el formulario de autenticación simple"""
     return render_template('auth_simple.html')
+
 
 @app.route('/auth-login-form')
 def auth_login_form():
     """Mostrar formulario de login"""
     return render_template('auth_login_form.html')
 
+
 @app.route('/auth-register-form')
 def auth_register_form():
     """Mostrar formulario de registro"""
     return render_template('auth_register_form.html')
+
 
 @app.route('/auth-verify-error')
 def auth_verify_error():
@@ -728,12 +842,14 @@ def auth_verify_error():
                            error=error_msg,
                            flow_type='login')
 
+
 @app.route('/navbar-content')
 @require_auth
 def navbar_content():
     """Devolver solo el navegador"""
     user = get_current_user()
     return render_template('navbar_content.html', user=user)
+
 
 @app.route('/cargar_navegador')
 @require_auth
@@ -742,6 +858,7 @@ def cargar_navegador():
     user = get_current_user()
     return render_template('navbar_content.html', user=user)
 
+
 @app.route('/dashboard-main')
 @require_auth
 def dashboard_main():
@@ -749,9 +866,11 @@ def dashboard_main():
     user = get_current_user()
     return render_template('dashboard_main_content.html', user=user)
 
+
 def is_htmx_request():
     """Detectar si es una petición HTMX"""
     return request.headers.get('HX-Request') == 'true'
+
 
 def get_form_data():
     """Obtener datos del formulario o JSON"""
@@ -759,6 +878,7 @@ def get_form_data():
         return request.get_json() or {}
     else:
         return request.form.to_dict()
+
 
 @app.route('/api/auth/htmx-register', methods=['POST'])
 @csrf.exempt
@@ -774,12 +894,11 @@ def htmx_register():
 
         # Verificar que el email no exista
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute(
-            'SELECT id FROM users WHERE email = %s', (email,))
-        existing_user = cursor.fetchone()
+        existing_user = conn.execute(
+            'SELECT id FROM users WHERE email = ?', (email,)).fetchone()
 
         if existing_user:
+
             return render_template('auth_user_exists.html', email=email)
 
         # Generar código de verificación
@@ -791,14 +910,13 @@ def htmx_register():
         print(f"DEBUG REGISTER: Expira en: {code_expires}")
 
         # Crear usuario temporal con código
-        cursor.execute('''
+        cursor = conn.execute('''
             INSERT INTO users (name, email, verification_code, code_expires, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING id
+            VALUES (?, ?, ?, ?, ?, ?)
         ''', (name, email, verification_code, code_expires, datetime.now(), datetime.now()))
 
-        user_id = cursor.fetchone()[0]
         conn.commit()
+
 
         # Enviar código por email
         email_sent = send_verification_email(email, verification_code, name)
@@ -812,6 +930,7 @@ def htmx_register():
     except Exception as e:
         log_error('htmx_register', e, f'Name: {name}, Email: {email}')
         return render_template('auth_register_form.html')
+
 
 @app.route('/api/auth/htmx-login', methods=['POST'])
 @csrf.exempt
@@ -827,12 +946,11 @@ def htmx_login():
 
         # Verificar que el email existe
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute(
-            'SELECT id, name FROM users WHERE email = %s', (email,))
-        existing_user = cursor.fetchone()
+        existing_user = conn.execute(
+            'SELECT id, name FROM users WHERE email = ?', (email,)).fetchone()
 
         if not existing_user:
+
             return render_template('auth_user_not_found.html', email=email)
 
         # Generar código de verificación
@@ -844,17 +962,18 @@ def htmx_login():
         print(f"DEBUG LOGIN: Expira en: {code_expires}")
 
         # Actualizar usuario con código
-        cursor.execute('''
+        conn.execute('''
             UPDATE users 
-            SET verification_code = %s, code_expires = %s, updated_at = %s
-            WHERE email = %s
+            SET verification_code = ?, code_expires = ?, updated_at = ?
+            WHERE email = ?
         ''', (verification_code, code_expires, datetime.now(), email))
 
         conn.commit()
 
+
         # Enviar código por email
         email_sent = send_verification_email(
-            email, verification_code, existing_user[1])
+            email, verification_code, existing_user['name'])
         if not email_sent:
             print(
                 f"⚠️ No se pudo enviar email a {email}, pero continuando con el proceso")
@@ -865,6 +984,7 @@ def htmx_login():
     except Exception as e:
         log_error('htmx_login', e, f'Email: {email}')
         return render_template('auth_login_form.html', error="Error interno del servidor. Inténtalo de nuevo.")
+
 
 @app.route('/api/auth/htmx-verify', methods=['POST'])
 @csrf.exempt
@@ -889,47 +1009,47 @@ def htmx_verify():
 
         # Verificar código directamente en la base de datos
         conn = get_db()
-        cursor = conn.cursor()
 
         # Primero buscar el usuario por email para debug
-        cursor.execute('''
+        debug_user = conn.execute('''
             SELECT id, name, email, verification_code, code_expires 
             FROM users 
-            WHERE email = %s
-        ''', (email,))
-        debug_user = cursor.fetchone()
+            WHERE email = ?
+        ''', (email,)).fetchone()
 
         print(
-            f"DEBUG VERIFY: Usuario encontrado: {debug_user if debug_user else 'None'}")
+            f"DEBUG VERIFY: Usuario encontrado: {dict(debug_user) if debug_user else 'None'}")
         print(f"DEBUG VERIFY: Código recibido: '{code}'")
         print(
-            f"DEBUG VERIFY: Código en DB: '{debug_user[3] if debug_user else 'None'}'")
+            f"DEBUG VERIFY: Código en DB: '{debug_user['verification_code'] if debug_user else 'None'}'")
         print(
-            f"DEBUG VERIFY: Expira en: {debug_user[4] if debug_user else 'None'}")
+            f"DEBUG VERIFY: Expira en: {debug_user['code_expires'] if debug_user else 'None'}")
         print(f"DEBUG VERIFY: Hora actual: {datetime.now()}")
 
-        cursor.execute('''
+        user = conn.execute('''
             SELECT id, name, verification_code, code_expires 
             FROM users 
-            WHERE email = %s AND verification_code = %s AND code_expires > %s
-        ''', (email, code, datetime.now()))
-        user = cursor.fetchone()
+            WHERE email = ? AND verification_code = ? AND code_expires > ?
+        ''', (email, code, datetime.now())).fetchone()
 
         if not user:
+
             return render_template('auth_verify_simple.html',
                                    email=email,
                                    error="Código incorrecto o expirado",
                                    flow_type='login')
 
         # Limpiar código de verificación
-        cursor.execute('''
+        conn.execute('''
             UPDATE users 
-            SET verification_code = NULL, code_expires = NULL, updated_at = %s
-            WHERE id = %s
-        ''', (datetime.now(), user[0]))
+            SET verification_code = NULL, code_expires = NULL, updated_at = ?
+            WHERE id = ?
+        ''', (datetime.now(), user['id']))
+
         conn.commit()
 
-        user_id = user[0]
+
+        user_id = user['id']
 
         # Crear sesión
         access_token = create_user_session_email(user_id)
@@ -951,6 +1071,7 @@ def htmx_verify():
                                error="Error al verificar el código",
                                flow_type='login')
 
+
 @app.route('/debug-session')
 def debug_session():
     """Endpoint para debuggear la sesión"""
@@ -963,6 +1084,7 @@ def debug_session():
         'has_verification_code': 'verification_code' in session,
         'has_verification_email': 'verification_email' in session
     })
+
 
 @app.route('/dashboard')
 def dashboard():
@@ -1026,6 +1148,7 @@ def dashboard():
     log_user_action(user['id'], 'VIEW_DASHBOARD', 'Dashboard accessed')
     return render_template('dashboard.html', user=user, session_info=session_info)
 
+
 @app.route('/main')
 def main_panel():
     """Template principal con navegación cuando hay sesión activa"""
@@ -1043,6 +1166,7 @@ def main_panel():
 
     log_user_action(user['id'], 'VIEW_MAIN_PANEL', 'Main panel accessed')
     return render_template('main_panel.html', user=user)
+
 
 @app.route('/dashboard-content')
 @require_auth
@@ -1092,6 +1216,7 @@ def dashboard_content():
                     'Dashboard content loaded')
     return render_template('dashboard_content.html', user=user, session_info=session_info)
 
+
 @app.route('/profile')
 @require_auth
 def profile():
@@ -1106,6 +1231,7 @@ def profile():
     # Si es acceso directo, redirigir al panel principal
     return redirect(url_for('main_panel'))
 
+
 @app.route('/profile-content')
 @require_auth
 def profile_content():
@@ -1115,6 +1241,7 @@ def profile_content():
                     'Profile content loaded')
     return render_template('profile.html', user=user)
 
+
 @app.route('/selector_fotos')
 @require_auth
 def selector_fotos():
@@ -1123,6 +1250,7 @@ def selector_fotos():
 
     return render_template('opciones.html', user=user)
 
+
 respuestas_correctas = [
     "paquita",
     "carlos",
@@ -1130,6 +1258,7 @@ respuestas_correctas = [
     "gloria",
     "maripaz"
 ]
+
 
 @app.route('/api/verificar_respuesta', methods=['POST'])
 def verificar_respuesta():
@@ -1146,7 +1275,9 @@ def verificar_respuesta():
     if respuesta_usuario == respuestas_correctas[question_index]:
         return render_template('opciones.html')
     else:
+
         return render_template('error_de_pregunta.html')
+
 
 @app.route('/subir_foto')
 @require_auth
@@ -1154,6 +1285,7 @@ def subir_foto():
     """Formulario para subir foto"""
     user = get_current_user()
     return render_template('subir_foto.html', user=user)
+
 
 @app.route('/api/upload-photos', methods=['POST'])
 @require_auth
@@ -1182,7 +1314,6 @@ def upload_photos():
         uploaded_photos = []
         failed_uploads = []
         conn = get_db()
-        cursor = conn.cursor()
 
         for i, file in enumerate(files):
             if file and file.filename:
@@ -1214,13 +1345,12 @@ def upload_photos():
                     continue
 
                 # Guardar en base de datos con URL de Cloudinary
-                cursor.execute('''
+                cursor = conn.execute('''
                     INSERT INTO photos (user_id, nombre, nombre_archivo, mes, año, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    RETURNING id
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                 ''', (user['id'], nombre, cloudinary_result['url'], mes, año, datetime.now(), datetime.now()))
 
-                photo_id = cursor.fetchone()[0]
+                photo_id = cursor.lastrowid
                 uploaded_photos.append({
                     'id': photo_id,
                     'nombre': nombre,
@@ -1238,6 +1368,7 @@ def upload_photos():
                 print(f"Foto {file.filename} subida exitosamente")
 
         conn.commit()
+
 
         # Preparar respuesta
         success_count = len(uploaded_photos)
@@ -1267,6 +1398,7 @@ def upload_photos():
                   f'User: {user["id"] if user else "Unknown"}')
         return jsonify({'error': True, 'message': 'Error interno del servidor'}), 500
 
+
 @app.route('/fotos-recien-subidas')
 @require_auth
 def fotos_recien_subidas():
@@ -1282,28 +1414,26 @@ def fotos_recien_subidas():
             return render_template('galeria_todas_fotos.html', fotos=[], user=user)
 
         conn = get_db()
-        cursor = conn.cursor()
 
         # Crear placeholders para la consulta SQL
-        placeholders = ','.join(['%s' for _ in foto_ids])
+        placeholders = ','.join(['?' for _ in foto_ids])
 
         # Obtener solo las fotos recién subidas
-        cursor.execute(f'''
+        fotos = conn.execute(f'''
             SELECT p.*, u.name as usuario_nombre
             FROM photos p
             JOIN users u ON p.user_id = u.id
             WHERE p.id IN ({placeholders})
             ORDER BY p.created_at DESC
-        ''', foto_ids)
-        fotos = cursor.fetchall()
+        ''', foto_ids).fetchall()
+
+
 
         # Convertir a lista de diccionarios
         fotos_list = []
-        columns = [desc[0] for desc in cursor.description]
         for foto in fotos:
-            foto_dict = dict(zip(columns, foto))
             # Determinar si necesita etiquetado
-            personas_ids = foto_dict['personas_ids']
+            personas_ids = foto['personas_ids']
             necesita_etiquetado = (
                 not personas_ids or
                 personas_ids == 'null' or
@@ -1313,14 +1443,14 @@ def fotos_recien_subidas():
             )
 
             fotos_list.append({
-                'id': foto_dict['id'],
-                'nombre': foto_dict['nombre'],
-                'nombre_archivo': foto_dict['nombre_archivo'],
-                'mes': foto_dict['mes'],
-                'año': foto_dict['año'],
-                'usuario_nombre': foto_dict['usuario_nombre'],
-                'created_at': foto_dict['created_at'],
-                'personas_ids': foto_dict['personas_ids'],
+                'id': foto['id'],
+                'nombre': foto['nombre'],
+                'nombre_archivo': foto['nombre_archivo'],
+                'mes': foto['mes'],
+                'año': foto['año'],
+                'usuario_nombre': foto['usuario_nombre'],
+                'created_at': foto['created_at'],
+                'personas_ids': foto['personas_ids'],
                 'necesita_etiquetado': necesita_etiquetado
             })
 
@@ -1336,6 +1466,7 @@ def fotos_recien_subidas():
                   f'User: {user["id"] if user else "Unknown"}')
         return render_template('error.html', message='Error al cargar las fotos recientes'), 500
 
+
 @app.route('/editar_nombre')
 @require_auth
 def editar_nombre():
@@ -1347,22 +1478,18 @@ def editar_nombre():
         return '<div class="alert alert-danger m-3">ID de foto no proporcionado.</div>', 400
 
     conn = get_db()
-    cursor = conn.cursor()
     # Asegurarse de que el usuario solo pueda editar sus propias fotos
-    cursor.execute(
-        'SELECT id, nombre, nombre_archivo, mes, año FROM photos WHERE id = %s AND user_id = %s',
+    foto = conn.execute(
+        'SELECT id, nombre, nombre_archivo, mes, año FROM photos WHERE id = ? AND user_id = ?',
         (photo_id, user['id'])
-    )
-    foto = cursor.fetchone()
+    ).fetchone()
+    conn.close()
 
     if not foto:
         return '<div class="alert alert-danger m-3">Foto no encontrada o no tienes permiso para editarla.</div>', 404
 
-    # Convertir a dict
-    columns = [desc[0] for desc in cursor.description]
-    foto_dict = dict(zip(columns, foto))
+    return render_template('editar_nombre.html', foto=foto)
 
-    return render_template('editar_nombre.html', foto=foto_dict)
 
 @app.route('/api/actualizar_nombre/<int:photo_id>', methods=['POST'])
 @require_auth
@@ -1371,15 +1498,14 @@ def actualizar_nombre(photo_id):
     user = get_current_user()
 
     conn = get_db()
-    cursor = conn.cursor()
     # Verificar que la foto pertenece al usuario
-    cursor.execute(
-        'SELECT id FROM photos WHERE id = %s AND user_id = %s',
+    foto = conn.execute(
+        'SELECT id FROM photos WHERE id = ? AND user_id = ?',
         (photo_id, user['id'])
-    )
-    foto = cursor.fetchone()
+    ).fetchone()
 
     if not foto:
+
         return '<div class="alert alert-danger">Foto no encontrada o sin permiso.</div>', 404
 
     try:
@@ -1387,8 +1513,8 @@ def actualizar_nombre(photo_id):
         if not nuevo_nombre:
             return '<div class="alert alert-danger">El nombre no puede estar vacío.</div>', 400
 
-        cursor.execute(
-            'UPDATE photos SET nombre = %s, updated_at = %s WHERE id = %s',
+        conn.execute(
+            'UPDATE photos SET nombre = ?, updated_at = ? WHERE id = ?',
             (nuevo_nombre, datetime.now(), photo_id)
         )
         conn.commit()
@@ -1399,9 +1525,11 @@ def actualizar_nombre(photo_id):
         return '<div class="alert alert-success">Nombre actualizado correctamente.</div>'
 
     except Exception as e:
+
         log_error('actualizar_nombre', e,
                   f'User: {user["id"]}, Photo ID: {photo_id}')
         return f'<div class="alert alert-danger">Error al actualizar: {e}</div>', 500
+
 
 @app.route('/settings-content')
 @require_auth
@@ -1451,6 +1579,7 @@ def settings_content():
         </div>
     </div>
     '''
+
 
 @app.route('/activity-content')
 @require_auth
@@ -1547,6 +1676,7 @@ def activity_content():
     </style>
     '''
 
+
 @app.route('/api/profile/update', methods=['POST'])
 @limiter.limit("20 per minute")
 @require_auth
@@ -1571,13 +1701,13 @@ def update_profile():
 
         # Actualizar información (solo nombre y teléfono)
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute('''
+        conn.execute('''
             UPDATE users 
-            SET name = %s, phone = %s, updated_at = %s
-            WHERE id = %s
+            SET name = ?, phone = ?, updated_at = ?
+            WHERE id = ?
         ''', (name, phone if phone else None, datetime.now(), user['id']))
         conn.commit()
+
 
         log_user_action(user['id'], 'UPDATE_PROFILE_SUCCESS',
                         f'Updated: {name}, {phone}')
@@ -1597,6 +1727,7 @@ def update_profile():
             <strong>Error:</strong> No se pudo actualizar el perfil. Inténtalo de nuevo.
         </div>
         '''
+
 
 @app.route('/api/profile/activity')
 @require_auth
@@ -1649,12 +1780,14 @@ def profile_activity():
 
     return activity_html
 
+
 @app.route('/profile/change-email')
 @require_auth
 def change_email_modal():
     """Cargar modal para cambiar email"""
     user = get_current_user()
     return render_template('change_email_modal.html', user=user)
+
 
 @app.route('/profile/delete-account')
 @require_auth
@@ -1685,14 +1818,13 @@ def delete_account_modal():
         # Intentar contar registros relacionados
         try:
             conn = get_db()
-            cursor = conn.cursor()
 
-            cursor.execute(
-                'SELECT COUNT(*) as count FROM email_change_requests WHERE user_id = %s',
-                (user['id'],))
-            email_requests_row = cursor.fetchone()
+            email_requests_row = conn.execute(
+                'SELECT COUNT(*) as count FROM email_change_requests WHERE user_id = ?',
+                (user['id'],)).fetchone()
             if email_requests_row:
-                user_stats['email_requests'] = email_requests_row[0]
+                user_stats['email_requests'] = email_requests_row['count']
+
 
         except:
             pass  # Usar valores por defecto
@@ -1708,6 +1840,7 @@ def delete_account_modal():
             <strong>Error:</strong> No se pudo cargar el modal. Inténtalo de nuevo.
         </div>
         '''
+
 
 @app.route('/profile/delete-account-page')
 @require_auth
@@ -1751,6 +1884,7 @@ def delete_account_page():
             </div>
         </div>
         '''
+
 
 @app.route('/api/profile/change-email', methods=['POST'])
 @limiter.limit("3 per minute")
@@ -1802,12 +1936,11 @@ def request_email_change():
 
         # Verificar que el nuevo email no esté en uso
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute(
-            'SELECT id FROM users WHERE email = %s', (new_email,))
-        existing_user = cursor.fetchone()
+        existing_user = conn.execute(
+            'SELECT id FROM users WHERE email = ?', (new_email,)).fetchone()
 
         if existing_user:
+
             return '''
             <div class="alert alert-danger">
                 <strong>Error:</strong> Este email ya está en uso por otra cuenta.
@@ -1820,13 +1953,23 @@ def request_email_change():
         code_expires = datetime.now() + timedelta(minutes=10)
 
         # Guardar solicitud de cambio de email
-        cursor.execute('''
-            INSERT INTO email_change_requests (user_id, new_email, verification_code, expires)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (user_id) 
-            DO UPDATE SET new_email = %s, verification_code = %s, expires = %s, created_at = CURRENT_TIMESTAMP
-        ''', (user['id'], new_email, verification_code, code_expires, new_email, verification_code, code_expires))
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS email_change_requests (
+                user_id INTEGER PRIMARY KEY,
+                new_email TEXT NOT NULL,
+                verification_code TEXT NOT NULL,
+                expires TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+        ''')
+
+        conn.execute('''
+            INSERT OR REPLACE INTO email_change_requests (user_id, new_email, verification_code, expires)
+            VALUES (?, ?, ?, ?)
+        ''', (user['id'], new_email, verification_code, code_expires))
         conn.commit()
+
 
         # Enviar email de verificación al NUEVO email
         from email_service import email_service
@@ -1861,6 +2004,7 @@ def request_email_change():
         </div>
         '''
 
+
 @app.route('/profile/verify-email-change')
 def verify_email_change_form():
     """Mostrar formulario de verificación de cambio de email"""
@@ -1870,12 +2014,11 @@ def verify_email_change_form():
 
     # Verificar que hay una solicitud pendiente
     conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute('''
+    request_data = conn.execute('''
         SELECT new_email, expires FROM email_change_requests 
-        WHERE user_id = %s AND expires > %s
-    ''', (user['id'], datetime.now()))
-    request_data = cursor.fetchone()
+        WHERE user_id = ? AND expires > ?
+    ''', (user['id'], datetime.now())).fetchone()
+    conn.close()
 
     if not request_data:
         return '''
@@ -1886,7 +2029,7 @@ def verify_email_change_form():
 
     return f'''
     <div class="alert alert-info">
-        <strong>📧 Verificando cambio a:</strong> {request_data[0]}
+        <strong>📧 Verificando cambio a:</strong> {request_data['new_email']}
     </div>
     
     <form hx-post="/api/profile/verify-email-change" 
@@ -1916,6 +2059,7 @@ def verify_email_change_form():
     </form>
     '''
 
+
 @app.route('/api/profile/verify-email-change', methods=['POST'])
 @limiter.limit("10 per minute")
 def confirm_email_change():
@@ -1937,14 +2081,13 @@ def confirm_email_change():
 
         # Verificar código
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute('''
+        request_data = conn.execute('''
             SELECT new_email, verification_code, expires FROM email_change_requests 
-            WHERE user_id = %s
-        ''', (user['id'],))
-        request_data = cursor.fetchone()
+            WHERE user_id = ?
+        ''', (user['id'],)).fetchone()
 
         if not request_data:
+
             return '''
             <div class="alert alert-danger">
                 <strong>Error:</strong> No se encontró solicitud de cambio de email.
@@ -1952,7 +2095,8 @@ def confirm_email_change():
             '''
 
         # Verificar que el código coincida
-        if request_data[1] != verification_code:
+        if request_data['verification_code'] != verification_code:
+
             return '''
             <div class="alert alert-danger">
                 <strong>Error:</strong> Código de verificación incorrecto.
@@ -1960,8 +2104,9 @@ def confirm_email_change():
             '''
 
         # Verificar que no haya expirado
-        expires = request_data[2]
+        expires = datetime.fromisoformat(request_data['expires'])
         if datetime.now() > expires:
+
             return '''
             <div class="alert alert-danger">
                 <strong>Error:</strong> El código ha expirado. Solicita uno nuevo.
@@ -1970,19 +2115,20 @@ def confirm_email_change():
 
         # Código válido - actualizar email
         old_email = user['email']
-        new_email = request_data[0]
+        new_email = request_data['new_email']
 
-        cursor.execute('''
+        conn.execute('''
             UPDATE users 
-            SET email = %s, updated_at = %s
-            WHERE id = %s
+            SET email = ?, updated_at = ?
+            WHERE id = ?
         ''', (new_email, datetime.now(), user['id']))
 
         # Limpiar solicitud de cambio
-        cursor.execute(
-            'DELETE FROM email_change_requests WHERE user_id = %s', (user['id'],))
+        conn.execute(
+            'DELETE FROM email_change_requests WHERE user_id = ?', (user['id'],))
 
         conn.commit()
+
 
         log_user_action(user['id'], 'EMAIL_CHANGED_SUCCESS',
                         f'From: {old_email} To: {new_email}')
@@ -2013,7 +2159,11 @@ def confirm_email_change():
         </div>
         '''
 
-@app.route('/api/profile/delete-account', methods=['POST'])
+
+ e:
+        print(f"Error mostrando resumen: {e}")
+
+        return render_template('error.html', messag@app.route('/api/profile/delete-account', methods=['POST'])
 @limiter.limit("2 per minute")
 @require_auth
 def process_delete_account():
@@ -2062,36 +2212,36 @@ def process_delete_account():
         log_session_event(user_id, 'TERMINATED', 'Account deletion')
 
         conn = get_db()
-        cursor = conn.cursor()
 
-        # 3. Eliminar datos relacionados
+        # 3. Eliminar datos relacionados (solo de tablas que existen)
         try:
             # Eliminar verificaciones de email pendientes
-            cursor.execute(
-                'DELETE FROM email_verification WHERE email = %s', (user_email,))
+            conn.execute(
+                'DELETE FROM email_verification WHERE email = ?', (user_email,))
         except:
             pass  # Tabla no existe, continuar
 
         try:
             # Limpiar token de acceso del usuario
-            cursor.execute('''
+            conn.execute('''
                 UPDATE users 
                 SET access_token = NULL, token_expires = NULL 
-                WHERE id = %s
+                WHERE id = ?
             ''', (user_id,))
         except:
             pass  # Error en update, continuar
 
         try:
             # Eliminar sesiones si la tabla existe
-            cursor.execute('DELETE FROM sessions WHERE user_id = %s', (user_id,))
+            conn.execute('DELETE FROM sessions WHERE user_id = ?', (user_id,))
         except:
             pass  # Tabla no existe, continuar
 
-        # 4. FINALMENTE: Eliminar el usuario
-        cursor.execute('DELETE FROM users WHERE id = %s', (user_id,))
+        # 4. FINALMENTE: Eliminar el usuario (esto debe funcionar)
+        conn.execute('DELETE FROM users WHERE id = ?', (user_id,))
 
         conn.commit()
+
 
         # Logging de eliminación exitosa
         log_user_action(user_id, 'ACCOUNT_DELETED_SUCCESS',
@@ -2102,7 +2252,7 @@ def process_delete_account():
         return '''
         <div class="alert alert-success border-0 shadow-sm">
             <div class="d-flex align-items-center mb-3">
-                <div class="me-3 fs-1">✅</div>
+                <div="mbss="me-3 fs-1">✅</div>
                 <div>
                     <h5 class="alert-heading mb-1">Cuenta eliminada exitosamente</h5>
                     <p class="mb-0">Tu cuenta y todos los datos han sido eliminados permanentemente.</p>
@@ -2145,6 +2295,7 @@ def process_delete_account():
         </div>
         '''
 
+
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
     try:
@@ -2154,11 +2305,10 @@ def logout():
         # Limpiar token en base de datos
         if user_id:
             conn = get_db()
-            cursor = conn.cursor()
-            cursor.execute('''
+            conn.execute('''
                 UPDATE users 
                 SET access_token = NULL, token_expires = NULL 
-                WHERE id = %s
+                WHERE id = ?
             ''', (user_id,))
             conn.commit()
 
@@ -2187,6 +2337,7 @@ def logout():
 
         return redirect(url_for('index'))
 
+
 @app.route('/api/logout', methods=['POST'])
 def api_logout():
     """Endpoint de logout para HTMX"""
@@ -2197,11 +2348,10 @@ def api_logout():
         # Limpiar token en base de datos
         if user_id:
             conn = get_db()
-            cursor = conn.cursor()
-            cursor.execute('''
+            conn.execute('''
                 UPDATE users 
                 SET access_token = NULL, token_expires = NULL 
-                WHERE id = %s
+                WHERE id = ?
             ''', (user_id,))
             conn.commit()
 
@@ -2233,6 +2383,7 @@ def api_logout():
         }
 
         return '', 200, {'HX-Location': json.dumps(logout_location)}
+
 
 @app.route('/api/session-status')
 def session_status():
@@ -2274,6 +2425,7 @@ def session_status():
 
     return '<span id="session-time-remaining" class="text-danger">Sesión sin expiración definida</span>'
 
+
 @app.route('/api/session-warning')
 def session_warning():
     """Endpoint para avisos de sesión próxima a expirar"""
@@ -2283,12 +2435,7 @@ def session_warning():
 
     # Verificar si la sesión está próxima a expirar (10 minutos antes de expirar)
     if user['token_expires']:
-        # PostgreSQL returns datetime objects directly, unlike SQLite which returns strings
-        if isinstance(user['token_expires'], str):
-            expires = datetime.fromisoformat(user['token_expires'])
-        else:
-            expires = user['token_expires']
-            
+        expires = datetime.fromisoformat(user['token_expires'])
         time_left = expires - datetime.now()
         total_minutes = int(time_left.total_seconds() / 60)
 
@@ -2297,6 +2444,7 @@ def session_warning():
                                    time_remaining=f"{total_minutes} minutos")
 
     return '', 204
+
 
 @app.route('/api/extend-session', methods=['POST'])
 @limiter.limit("5 per minute")
@@ -2310,13 +2458,13 @@ def extend_session():
         new_expires = datetime.now() + timedelta(hours=8)
 
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute('''
+        conn.execute('''
             UPDATE users 
-            SET token_expires = %s, updated_at = %s
-            WHERE id = %s
+            SET token_expires = ?, updated_at = ?
+            WHERE id = ?
         ''', (new_expires, datetime.now(), user['id']))
         conn.commit()
+
 
         log_user_action(user['id'], 'EXTEND_SESSION',
                         f'Session extended until {new_expires}')
@@ -2336,6 +2484,7 @@ def extend_session():
             'message': 'Error al extender la sesión'
         }), 500
 
+
 @app.route('/api/session-info')
 def session_info():
     """Endpoint para información detallada de sesión"""
@@ -2345,12 +2494,7 @@ def session_info():
 
     # Preparar información de sesión
     if user['token_expires']:
-        # PostgreSQL returns datetime objects directly, unlike SQLite which returns strings
-        if isinstance(user['token_expires'], str):
-            expires = datetime.fromisoformat(user['token_expires'])
-        else:
-            expires = user['token_expires']
-            
+        expires = datetime.fromisoformat(user['token_expires'])
         time_left = expires - datetime.now()
         total_minutes = int(time_left.total_seconds() / 60)
         hours = total_minutes // 60
@@ -2359,7 +2503,7 @@ def session_info():
         session_data = {
             'authenticated': True,
             'user_id': user['id'],
-            'expires_at': user['token_expires'].strftime('%Y-%m-%d %H:%M:%S') if isinstance(user['token_expires'], datetime) else user['token_expires'][:19],
+            'expires_at': user['token_expires'][:19],
             'minutes_remaining': max(0, total_minutes),
             'hours_remaining': max(0, hours),
             'mins_remaining': max(0, minutes),
@@ -2377,6 +2521,7 @@ def session_info():
         }
 
     return jsonify(session_data)
+
 
 @app.route('/api/auth/register', methods=['POST'])
 @csrf.exempt
@@ -2410,10 +2555,9 @@ def auth_register():
 
         # Verificar que el email no exista
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute(
-            'SELECT id FROM users WHERE email = %s', (email,))
-        existing_user = cursor.fetchone()
+        existing_user = conn.execute(
+            'SELECT id FROM users WHERE email = ?', (email,)).fetchone()
+
 
         if existing_user:
             return jsonify({
@@ -2429,13 +2573,23 @@ def auth_register():
         code_expires = datetime.now() + timedelta(minutes=10)
 
         # Guardar código temporal
-        cursor.execute('''
-            INSERT INTO email_verification (email, name, code, expires)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (email) 
-            DO UPDATE SET name = %s, code = %s, expires = %s, created_at = CURRENT_TIMESTAMP
-        ''', (email, name, verification_code, code_expires, name, verification_code, code_expires))
+        conn = get_db()
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS email_verification (
+                email TEXT PRIMARY KEY,
+                name TEXT,
+                code TEXT,
+                expires TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        conn.execute('''
+            INSERT OR REPLACE INTO email_verification (email, name, code, expires)
+            VALUES (?, ?, ?, ?)
+        ''', (email, name, verification_code, code_expires))
         conn.commit()
+
 
         # Enviar email con código
         from email_service import email_service
@@ -2468,6 +2622,7 @@ def auth_register():
             'message': 'Error interno del servidor'
         }), 500
 
+
 @app.route('/api/auth/login', methods=['POST'])
 @csrf.exempt
 @limiter.limit("10 per minute")
@@ -2486,10 +2641,9 @@ def auth_login():
 
         # Verificar que el email existe
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute(
-            'SELECT id, name FROM users WHERE email = %s', (email,))
-        existing_user = cursor.fetchone()
+        existing_user = conn.execute(
+            'SELECT id, name FROM users WHERE email = ?', (email,)).fetchone()
+
 
         if not existing_user:
             return jsonify({
@@ -2504,18 +2658,28 @@ def auth_login():
         code_expires = datetime.now() + timedelta(minutes=10)
 
         # Guardar código temporal
-        cursor.execute('''
-            INSERT INTO email_verification (email, name, code, expires)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (email) 
-            DO UPDATE SET name = %s, code = %s, expires = %s, created_at = CURRENT_TIMESTAMP
-        ''', (email, existing_user[1], verification_code, code_expires, existing_user[1], verification_code, code_expires))
+        conn = get_db()
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS email_verification (
+                email TEXT PRIMARY KEY,
+                name TEXT,
+                code TEXT,
+                expires TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        conn.execute('''
+            INSERT OR REPLACE INTO email_verification (email, name, code, expires)
+            VALUES (?, ?, ?, ?)
+        ''', (email, existing_user['name'], verification_code, code_expires))
         conn.commit()
+
 
         # Enviar email con código
         from email_service import email_service
         email_sent = email_service.send_verification_code(
-            email, existing_user[1], verification_code)
+            email, existing_user['name'], verification_code)
 
         if email_sent:
             return jsonify({
@@ -2523,7 +2687,7 @@ def auth_login():
                 'message': 'Código de verificación enviado a tu email',
                 'action': 'verify_email',
                 'email': email,
-                'name': existing_user[1]
+                'name': existing_user['name']
             })
         else:
             # MODO DESARROLLO - Mostrar código en logs para poder continuar
@@ -2531,7 +2695,7 @@ def auth_login():
                 app_logger.warning(
                     f"🧪 MODO DEBUG - Email falló, código para desarrollo:")
                 app_logger.warning(f"📧 Email: {email}")
-                app_logger.warning(f"👤 Nombre: {existing_user[1]}")
+                app_logger.warning(f"👤 Nombre: {existing_user['name']}")
                 app_logger.warning(f"🔢 CÓDIGO: {verification_code}")
 
                 return jsonify({
@@ -2539,7 +2703,7 @@ def auth_login():
                     'message': f'⚠️ MODO DEBUG: Email falló. Código: {verification_code}',
                     'action': 'verify_email',
                     'email': email,
-                    'name': existing_user[1],
+                    'name': existing_user['name'],
                     'debug_code': verification_code  # Solo en modo debug
                 })
             else:
@@ -2557,6 +2721,7 @@ def auth_login():
             'code': 'SERVER_ERROR',
             'message': 'Error interno del servidor'
         }), 500
+
 
 @app.route('/api/auth/verify-email', methods=['POST'])
 @csrf.exempt
@@ -2578,14 +2743,13 @@ def auth_verify_email():
 
         # Verificar código de email
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute('''
+        verification = conn.execute('''
             SELECT name, code, expires FROM email_verification 
-            WHERE email = %s
-        ''', (email,))
-        verification = cursor.fetchone()
+            WHERE email = ?
+        ''', (email,)).fetchone()
 
         if not verification:
+
             return jsonify({
                 'error': True,
                 'code': 'VERIFICATION_NOT_FOUND',
@@ -2593,7 +2757,8 @@ def auth_verify_email():
             }), 404
 
         # Verificar que el código coincida
-        if verification[1] != code:
+        if verification['code'] != code:
+
             return jsonify({
                 'error': True,
                 'code': 'INVALID_CODE',
@@ -2601,8 +2766,9 @@ def auth_verify_email():
             }), 400
 
         # Verificar que no haya expirado
-        expires = verification[2]
+        expires = datetime.fromisoformat(verification['expires'])
         if datetime.now() > expires:
+
             return jsonify({
                 'error': True,
                 'code': 'CODE_EXPIRED',
@@ -2610,13 +2776,14 @@ def auth_verify_email():
             }), 400
 
         # Limpiar verificación usada
-        cursor.execute(
-            'DELETE FROM email_verification WHERE email = %s', (email,))
+        conn.execute(
+            'DELETE FROM email_verification WHERE email = ?', (email,))
         conn.commit()
+
 
         # Si es registro, crear usuario
         if action == 'register':
-            name = verification[0]
+            name = verification['name']
             user_id = create_user_email(name, email)
             if not user_id:
                 return jsonify({
@@ -2626,9 +2793,10 @@ def auth_verify_email():
                 }), 500
         else:
             # Si es login, obtener usuario existente
-            cursor.execute(
-                'SELECT id FROM users WHERE email = %s', (email,))
-            user = cursor.fetchone()
+            conn2 = get_db()
+            user = conn2.execute(
+                'SELECT id FROM users WHERE email = ?', (email,)).fetchone()
+            conn2.close()
 
             if not user:
                 return jsonify({
@@ -2637,7 +2805,7 @@ def auth_verify_email():
                     'message': 'Usuario no encontrado'
                 }), 404
 
-            user_id = user[0]
+            user_id = user['id']
 
         # Crear sesión
         access_token = create_user_session_email(user_id)
@@ -2677,6 +2845,7 @@ def auth_verify_email():
             'message': 'Error interno del servidor'
         }), 500
 
+
 @app.route('/admin/test-smtp')
 @require_debug
 def test_smtp():
@@ -2706,6 +2875,7 @@ def test_smtp():
         <a href="/admin/logs">Ver logs de error</a>
         """
 
+
 @app.route('/api/borrar-fotos', methods=['POST'])
 @require_auth
 def borrar_fotos():
@@ -2719,21 +2889,19 @@ def borrar_fotos():
             return jsonify({'success': False, 'message': 'No se proporcionaron IDs de fotos'}), 400
 
         conn = get_db()
-        cursor = conn.cursor()
         deleted_count = 0
 
         # Verificar que las fotos pertenecen al usuario actual y borrarlas
         for foto_id in foto_ids:
             # Verificar propiedad y obtener info de la foto
-            cursor.execute('''
+            foto = conn.execute('''
                 SELECT nombre_archivo FROM photos 
-                WHERE id = %s AND user_id = %s
-            ''', (foto_id, user['id']))
-            foto = cursor.fetchone()
+                WHERE id = ? AND user_id = ?
+            ''', (foto_id, user['id'])).fetchone()
 
             if foto:
                 # Extraer public_id de la URL de Cloudinary y borrar
-                cloudinary_url = foto[0]
+                cloudinary_url = foto['nombre_archivo']
                 try:
                     # URL típica: https://res.cloudinary.com/dquxfl0fe/image/upload/v1234567890/familia/photo_20250813_abc123.jpg
                     # Extraer: familia/photo_20250813_abc123
@@ -2755,11 +2923,12 @@ def borrar_fotos():
                     # Continuar aunque falle Cloudinary
 
                 # Borrar de base de datos
-                cursor.execute(
-                    'DELETE FROM photos WHERE id = %s AND user_id = %s', (foto_id, user['id']))
+                conn.execute(
+                    'DELETE FROM photos WHERE id = ? AND user_id = ?', (foto_id, user['id']))
                 deleted_count += 1
 
         conn.commit()
+
 
         log_user_action(user['id'], 'DELETE_PHOTOS',
                         f'Deleted {deleted_count} photos')
@@ -2775,6 +2944,7 @@ def borrar_fotos():
                   f'User: {user["id"] if user else "Unknown"}')
         return jsonify({'success': False, 'message': 'Error interno del servidor'}), 500
 
+
 @app.route('/ver-mis-fotos')
 @require_auth
 def ver_mis_fotos():
@@ -2782,25 +2952,23 @@ def ver_mis_fotos():
     try:
         user = get_current_user()
         conn = get_db()
-        cursor = conn.cursor()
 
         # Obtener solo las fotos del usuario actual ordenadas por año DESC, mes DESC
-        cursor.execute('''
+        fotos = conn.execute('''
             SELECT p.*, u.name as usuario_nombre
             FROM photos p
             JOIN users u ON p.user_id = u.id
-            WHERE p.user_id = %s
+            WHERE p.user_id = ?
             ORDER BY p.año DESC, p.mes DESC, p.created_at DESC
-        ''', (user['id'],))
-        fotos = cursor.fetchall()
+        ''', (user['id'],)).fetchall()
+
+
 
         # Convertir a lista de diccionarios para facilitar el manejo en el template
         fotos_list = []
-        columns = [desc[0] for desc in cursor.description]
         for foto in fotos:
-            foto_dict = dict(zip(columns, foto))
             # Determinar si necesita etiquetado
-            personas_ids = foto_dict['personas_ids']
+            personas_ids = foto['personas_ids']
             necesita_etiquetado = (
                 not personas_ids or
                 personas_ids == 'null' or
@@ -2810,14 +2978,14 @@ def ver_mis_fotos():
             )
 
             fotos_list.append({
-                'id': foto_dict['id'],
-                'nombre': foto_dict['nombre'],
-                'nombre_archivo': foto_dict['nombre_archivo'],  # URL de Cloudinary
-                'mes': foto_dict['mes'],
-                'año': foto_dict['año'],
-                'usuario_nombre': foto_dict['usuario_nombre'],
-                'created_at': foto_dict['created_at'],
-                'personas_ids': foto_dict['personas_ids'],
+                'id': foto['id'],
+                'nombre': foto['nombre'],
+                'nombre_archivo': foto['nombre_archivo'],  # URL de Cloudinary
+                'mes': foto['mes'],
+                'año': foto['año'],
+                'usuario_nombre': foto['usuario_nombre'],
+                'created_at': foto['created_at'],
+                'personas_ids': foto['personas_ids'],
                 'necesita_etiquetado': necesita_etiquetado
             })
 
@@ -2831,52 +2999,44 @@ def ver_mis_fotos():
                   f'User: {user["id"] if user else "Unknown"}')
         return render_template('error.html', message='Error al cargar las fotos'), 500
 
+
 @app.route('/gestionar-personas')
 @require_auth
 def gestionar_personas():
     """Mostrar página para gestionar personas"""
-    user = None
     try:
         user = get_current_user()
         conn = get_db()
-        cursor = conn.cursor()
 
         # Obtener todas las personas
-        cursor.execute('''
+        personas = conn.execute('''
             SELECT id, nombre, imagen, created_at
             FROM personas
             ORDER BY nombre ASC
-        ''')
-        personas = cursor.fetchall()
+        ''').fetchall()
+
+
 
         # Convertir a lista de diccionarios
         personas_list = []
-        columns = [desc[0] for desc in cursor.description]
         for persona in personas:
-            persona_dict = dict(zip(columns, persona))
-            # Convertir datetime a string para compatibilidad con la plantilla
-            created_at = persona_dict['created_at']
-            if hasattr(created_at, 'strftime'):
-                # Es un objeto datetime (PostgreSQL), convertir a string
-                persona_dict['created_at'] = created_at.strftime('%Y-%m-%d %H:%M:%S')
-            
             personas_list.append({
-                'id': persona_dict['id'],
-                'nombre': persona_dict['nombre'],
-                'imagen': persona_dict['imagen'],
-                'created_at': persona_dict['created_at']
+                'id': persona['id'],
+                'nombre': persona['nombre'],
+                'imagen': persona['imagen'],
+                'created_at': persona['created_at']
             })
 
-        if user:
-            log_user_action(user['id'], 'VIEW_PERSONS',
-                            f'Viewed {len(personas_list)} persons')
+        log_user_action(user['id'], 'VIEW_PERSONS',
+                        f'Viewed {len(personas_list)} persons')
 
         return render_template('gestionar_personas.html', personas=personas_list, user=user)
 
     except Exception as e:
-        user_id = user['id'] if user else "Unknown"
-        log_error('gestionar_personas', e, f'User: {user_id}')
+        log_error('gestionar_personas', e,
+                  f'User: {user["id"] if user else "Unknown"}')
         return render_template('error.html', message='Error al cargar las personas'), 500
+
 
 @app.route('/ver-todas-fotos')
 @require_auth
@@ -2885,24 +3045,22 @@ def ver_todas_fotos():
     try:
         user = get_current_user()
         conn = get_db()
-        cursor = conn.cursor()
 
         # Obtener todas las fotos ordenadas por año DESC, mes DESC (más recientes primero)
-        cursor.execute('''
+        fotos = conn.execute('''
             SELECT p.*, u.name as usuario_nombre
             FROM photos p
             JOIN users u ON p.user_id = u.id
             ORDER BY p.año DESC, p.mes DESC, p.created_at DESC
-        ''')
-        fotos = cursor.fetchall()
+        ''').fetchall()
+
+
 
         # Convertir a lista de diccionarios para facilitar el manejo en el template
         fotos_list = []
-        columns = [desc[0] for desc in cursor.description]
         for foto in fotos:
-            foto_dict = dict(zip(columns, foto))
             # Determinar si necesita etiquetado
-            personas_ids = foto_dict['personas_ids']
+            personas_ids = foto['personas_ids']
             necesita_etiquetado = (
                 not personas_ids or
                 personas_ids == 'null' or
@@ -2912,14 +3070,14 @@ def ver_todas_fotos():
             )
 
             fotos_list.append({
-                'id': foto_dict['id'],
-                'nombre': foto_dict['nombre'],
-                'nombre_archivo': foto_dict['nombre_archivo'],  # URL de Cloudinary
-                'mes': foto_dict['mes'],
-                'año': foto_dict['año'],
-                'usuario_nombre': foto_dict['usuario_nombre'],
-                'created_at': foto_dict['created_at'],
-                'personas_ids': foto_dict['personas_ids'],
+                'id': foto['id'],
+                'nombre': foto['nombre'],
+                'nombre_archivo': foto['nombre_archivo'],  # URL de Cloudinary
+                'mes': foto['mes'],
+                'año': foto['año'],
+                'usuario_nombre': foto['usuario_nombre'],
+                'created_at': foto['created_at'],
+                'personas_ids': foto['personas_ids'],
                 'necesita_etiquetado': necesita_etiquetado
             })
 
@@ -2935,25 +3093,25 @@ def ver_todas_fotos():
                   f'User: {user["id"] if user else "Unknown"}')
         return render_template('error.html', message='Error al cargar las fotos'), 500
 
+
 @app.route('/api/get-personas', methods=['GET'])
 @require_auth
 def get_personas():
     """Obtener lista de personas para filtros"""
     try:
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute('''
+        personas = conn.execute('''
             SELECT id, nombre
             FROM personas
             ORDER BY nombre ASC
-        ''')
-        personas = cursor.fetchall()
+        ''').fetchall()
+
 
         personas_list = []
         for persona in personas:
             personas_list.append({
-                'id': persona[0],
-                'nombre': persona[1]
+                'id': persona['id'],
+                'nombre': persona['nombre']
             })
 
         return jsonify({
@@ -2964,6 +3122,7 @@ def get_personas():
     except Exception as e:
         log_error('get_personas', e, 'Error getting personas list')
         return jsonify({'success': False, 'message': 'Error interno del servidor'}), 500
+
 
 @app.route('/api/upload-person-image', methods=['POST'])
 @require_auth
@@ -3002,6 +3161,7 @@ def upload_person_image():
                   f'User: {user["id"] if user else "Unknown"}')
         return jsonify({'success': False, 'message': 'Error subiendo imagen'}), 500
 
+
 @app.route('/api/add-person', methods=['POST'])
 @require_auth
 def add_person():
@@ -3016,33 +3176,33 @@ def add_person():
             return jsonify({'success': False, 'message': 'El nombre es requerido'}), 400
 
         conn = get_db()
-        cursor = conn.cursor()
         user = get_current_user()
 
         # Si hay ID, es una edición
         if person_id:
             # Verificar que la persona existe
-            cursor.execute(
-                'SELECT id, nombre FROM personas WHERE id = %s', (person_id,))
-            existing = cursor.fetchone()
+            existing = conn.execute(
+                'SELECT id, nombre FROM personas WHERE id = ?', (person_id,)).fetchone()
             if not existing:
+    
                 return jsonify({'success': False, 'message': 'Persona no encontrada'}), 404
 
             # Verificar que no existe otra persona con el mismo nombre
-            cursor.execute(
-                'SELECT id FROM personas WHERE nombre = %s AND id != %s', (nombre, person_id))
-            name_conflict = cursor.fetchone()
+            name_conflict = conn.execute(
+                'SELECT id FROM personas WHERE nombre = ? AND id != ?', (nombre, person_id)).fetchone()
             if name_conflict:
+    
                 return jsonify({'success': False, 'message': 'Ya existe otra persona con ese nombre'}), 400
 
             # Actualizar persona existente
-            cursor.execute('''
+            conn.execute('''
                 UPDATE personas 
-                SET nombre = %s, imagen = %s, updated_at = %s
-                WHERE id = %s
+                SET nombre = ?, imagen = ?, updated_at = ?
+                WHERE id = ?
             ''', (nombre, imagen_url, datetime.now(), person_id))
 
             conn.commit()
+
 
             log_user_action(user['id'], 'EDIT_PERSON',
                             f'Edited person: {nombre}')
@@ -3056,21 +3216,21 @@ def add_person():
         else:
             # Es una nueva persona
             # Verificar que no existe una persona con el mismo nombre
-            cursor.execute(
-                'SELECT id FROM personas WHERE nombre = %s', (nombre,))
-            existing = cursor.fetchone()
+            existing = conn.execute(
+                'SELECT id FROM personas WHERE nombre = ?', (nombre,)).fetchone()
             if existing:
+    
                 return jsonify({'success': False, 'message': 'Ya existe una persona con ese nombre'}), 400
 
             # Insertar nueva persona
-            cursor.execute('''
+            cursor = conn.execute('''
                 INSERT INTO personas (nombre, imagen, created_at, updated_at)
-                VALUES (%s, %s, %s, %s)
-                RETURNING id
+                VALUES (?, ?, ?, ?)
             ''', (nombre, imagen_url, datetime.now(), datetime.now()))
 
-            person_id = cursor.fetchone()[0]
+            person_id = cursor.lastrowid
             conn.commit()
+
 
             log_user_action(user['id'], 'ADD_PERSON',
                             f'Added person: {nombre}')
@@ -3086,26 +3246,27 @@ def add_person():
                   f'User: {user["id"] if user else "Unknown"}')
         return jsonify({'success': False, 'message': 'Error interno del servidor'}), 500
 
+
 @app.route('/api/get-all-persons')
 @require_auth
 def get_all_persons():
     """Obtener todas las personas para el buscador"""
     try:
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute('''
+        personas = conn.execute('''
             SELECT id, nombre FROM personas 
             ORDER BY nombre
-        ''')
-        personas = cursor.fetchall()
+        ''').fetchall()
+
 
         return jsonify({
             'success': True,
-            'persons': [{'id': p[0], 'nombre': p[1]} for p in personas]
+            'persons': [{'id': p['id'], 'nombre': p['nombre']} for p in personas]
         })
 
     except Exception as e:
         return jsonify({'success': False, 'message': 'Error obteniendo personas'}), 500
+
 
 @app.route('/api/buscar-fotos-persona')
 @require_auth
@@ -3116,55 +3277,49 @@ def buscar_fotos_persona():
         buscar_persona = request.args.get('buscar_persona', '').strip()
 
         conn = get_db()
-        cursor = conn.cursor()
 
         if not buscar_persona:
             # Mostrar todas las fotos
-            cursor.execute('''
+            fotos = conn.execute('''
                 SELECT p.id, p.nombre, p.nombre_archivo, p.mes, p.año, p.created_at, p.personas_ids,
                        u.name as usuario_nombre
                 FROM photos p
                 JOIN users u ON p.user_id = u.id
                 ORDER BY p.created_at DESC
-            ''')
-            fotos = cursor.fetchall()
+            ''').fetchall()
         else:
             # Buscar en todas las fotos
-            cursor.execute('''
+            fotos = conn.execute('''
                 SELECT p.id, p.nombre, p.nombre_archivo, p.mes, p.año, p.created_at, p.personas_ids,
                        u.name as usuario_nombre
                 FROM photos p
                 JOIN users u ON p.user_id = u.id
                 ORDER BY p.created_at DESC
-            ''')
-            fotos = cursor.fetchall()
+            ''').fetchall()
 
             # Filtrar por nombre de foto O por persona
             fotos_filtradas = []
-            columns = [desc[0] for desc in cursor.description]
             for foto in fotos:
-                foto_dict = dict(zip(columns, foto))
                 # Buscar en el nombre de la foto
-                if buscar_persona.lower() in foto_dict['nombre'].lower():
-                    fotos_filtradas.append(foto_dict)
+                if buscar_persona.lower() in foto['nombre'].lower():
+                    fotos_filtradas.append(foto)
                     continue
 
                 # Buscar en las personas de la foto
                 try:
                     import json
                     personas_ids = json.loads(
-                        foto_dict['personas_ids']) if foto_dict['personas_ids'] else []
+                        foto['personas_ids']) if foto['personas_ids'] else []
                     if personas_ids:
-                        placeholders = ','.join(['%s' for _ in personas_ids])
-                        cursor.execute(f'''
+                        placeholders = ','.join(['?' for _ in personas_ids])
+                        personas = conn.execute(f'''
                             SELECT nombre FROM personas 
                             WHERE id IN ({placeholders})
-                        ''', personas_ids)
-                        personas = cursor.fetchall()
+                        ''', personas_ids).fetchall()
 
                         for persona in personas:
-                            if buscar_persona.lower() in persona[0].lower():
-                                fotos_filtradas.append(foto_dict)
+                            if buscar_persona.lower() in persona['nombre'].lower():
+                                fotos_filtradas.append(foto)
                                 break
                 except:
                     continue
@@ -3174,14 +3329,9 @@ def buscar_fotos_persona():
         # Agregar información de si necesita etiquetado
         fotos_con_info = []
         for foto in fotos:
-            if isinstance(foto, dict):
-                foto_dict = foto
-            else:
-                columns = [desc[0] for desc in cursor.description]
-                foto_dict = dict(zip(columns, foto))
-            
+            foto_dict = dict(foto)
             # Determinar si necesita etiquetado
-            personas_ids = foto_dict['personas_ids']
+            personas_ids = foto['personas_ids']
             necesita_etiquetado = (
                 not personas_ids or
                 personas_ids == 'null' or
@@ -3192,11 +3342,14 @@ def buscar_fotos_persona():
             foto_dict['necesita_etiquetado'] = necesita_etiquetado
             fotos_con_info.append(foto_dict)
 
+
+
         # Renderizar template completo de galería con fotos filtradas
         return render_template('galeria_todas_fotos.html', fotos=fotos_con_info, user=user)
 
     except Exception as e:
         return f"<div class='alert alert-danger'>Error: {str(e)}</div>"
+
 
 @app.route('/api/buscar-mis-fotos-persona')
 def buscar_mis_fotos_persona():
@@ -3206,70 +3359,61 @@ def buscar_mis_fotos_persona():
         buscar_persona = request.args.get('buscar_persona', '').strip()
 
         conn = get_db()
-        cursor = conn.cursor()
 
         if not buscar_persona:
             # Si no hay búsqueda, mostrar todas mis fotos
-            cursor.execute('''
+            fotos = conn.execute('''
                 SELECT id, nombre, nombre_archivo, mes, año, created_at, personas_ids
                 FROM photos 
-                WHERE user_id = %s
+                WHERE user_id = ?
                 ORDER BY created_at DESC
-            ''', (user['id'],))
-            fotos = cursor.fetchall()
+            ''', (user['id'],)).fetchall()
         else:
             # Buscar en todas mis fotos
-            cursor.execute('''
+            fotos = conn.execute('''
                 SELECT id, nombre, nombre_archivo, mes, año, created_at, personas_ids
                 FROM photos 
-                WHERE user_id = %s
+                WHERE user_id = ?
                 ORDER BY created_at DESC
-            ''', (user['id'],))
-            fotos = cursor.fetchall()
+            ''', (user['id'],)).fetchall()
 
             # Filtrar por nombre de foto O por persona
             fotos_filtradas = []
-            columns = [desc[0] for desc in cursor.description]
             for foto in fotos:
-                foto_dict = dict(zip(columns, foto))
                 # Buscar en el nombre de la foto
-                if buscar_persona.lower() in foto_dict['nombre'].lower():
-                    fotos_filtradas.append(foto_dict)
+                if buscar_persona.lower() in foto['nombre'].lower():
+                    fotos_filtradas.append(foto)
                     continue
 
                 # Buscar en las personas de la foto
                 try:
                     import json
                     personas_ids = json.loads(
-                        foto_dict['personas_ids']) if foto_dict['personas_ids'] else []
+                        foto['personas_ids']) if foto['personas_ids'] else []
                     if personas_ids:
-                        placeholders = ','.join(['%s' for _ in personas_ids])
-                        cursor.execute(f'''
+                        placeholders = ','.join(['?' for _ in personas_ids])
+                        personas = conn.execute(f'''
                             SELECT nombre FROM personas 
                             WHERE id IN ({placeholders})
-                        ''', personas_ids)
-                        personas = cursor.fetchall()
+                        ''', personas_ids).fetchall()
 
                         for persona in personas:
-                            if buscar_persona.lower() in persona[0].lower():
-                                fotos_filtradas.append(foto_dict)
+                            if buscar_persona.lower() in persona['nombre'].lower():
+                                fotos_filtradas.append(foto)
                                 break
                 except:
                     continue
 
             fotos = fotos_filtradas
 
+
+
         # Agregar información de si necesita etiquetado
         fotos_con_info = []
         for foto in fotos:
-            if isinstance(foto, dict):
-                foto_dict = foto
-            else:
-                columns = [desc[0] for desc in cursor.description]
-                foto_dict = dict(zip(columns, foto))
-            
+            foto_dict = dict(foto)
             # Determinar si necesita etiquetado
-            personas_ids = foto_dict['personas_ids']
+            personas_ids = foto['personas_ids']
             necesita_etiquetado = (
                 not personas_ids or
                 personas_ids == 'null' or
@@ -3285,6 +3429,7 @@ def buscar_mis_fotos_persona():
 
     except Exception as e:
         return f"<div class='alert alert-danger'>Error buscando fotos: {str(e)}</div>"
+
 
 @app.route('/api/test-buscar-fotos')
 def test_buscar_fotos():
@@ -3303,6 +3448,7 @@ def test_buscar_fotos():
     </div>
     """
 
+
 @app.route('/api/delete-person', methods=['POST'])
 @require_auth
 def delete_person():
@@ -3315,20 +3461,19 @@ def delete_person():
             return jsonify({'success': False, 'message': 'ID de persona requerido'}), 400
 
         conn = get_db()
-        cursor = conn.cursor()
 
         # Obtener info de la persona antes de borrar
-        cursor.execute(
-            'SELECT nombre, imagen FROM personas WHERE id = %s', (person_id,))
-        persona = cursor.fetchone()
+        persona = conn.execute(
+            'SELECT nombre, imagen FROM personas WHERE id = ?', (person_id,)).fetchone()
         if not persona:
+
             return jsonify({'success': False, 'message': 'Persona no encontrada'}), 404
 
         # Eliminar de Cloudinary si tiene imagen
-        if persona[1]:
+        if persona['imagen']:
             try:
                 # Extraer public_id y eliminar de Cloudinary
-                parts = persona[1].split('/')
+                parts = persona['imagen'].split('/')
                 if 'familia' in parts:
                     familia_index = parts.index('familia')
                     public_id_with_extension = '/'.join(parts[familia_index:])
@@ -3339,16 +3484,17 @@ def delete_person():
                     f"❌ Error eliminando imagen de persona de Cloudinary: {e}")
 
         # Eliminar persona
-        cursor.execute('DELETE FROM personas WHERE id = %s', (person_id,))
+        conn.execute('DELETE FROM personas WHERE id = ?', (person_id,))
         conn.commit()
+
 
         user = get_current_user()
         log_user_action(user['id'], 'DELETE_PERSON',
-                        f'Deleted person: {persona[0]}')
+                        f'Deleted person: {persona["nombre"]}')
 
         return jsonify({
             'success': True,
-            'message': f'Persona "{persona[0]}" eliminada correctamente'
+            'message': f'Persona "{persona["nombre"]}" eliminada correctamente'
         })
 
     except Exception as e:
@@ -3356,6 +3502,7 @@ def delete_person():
         log_error('delete_person', e,
                   f'User: {user["id"] if user else "Unknown"}')
         return jsonify({'success': False, 'message': 'Error interno del servidor'}), 500
+
 
 @app.route('/procesando-reconocimiento')
 @require_auth
@@ -3367,6 +3514,7 @@ def procesando_reconocimiento():
                     f'Viewing facial recognition processing for photos: {foto_ids}')
     return render_template('procesando_reconocimiento.html', user=user)
 
+
 @app.route('/api/procesar-reconocimiento-facial')
 @require_auth
 def api_procesar_reconocimiento_facial():
@@ -3375,7 +3523,6 @@ def api_procesar_reconocimiento_facial():
     try:
         user = get_current_user()
         conn = get_db()
-        cursor = conn.cursor()
 
         # Obtener IDs de fotos específicas desde la query string
         ids_param = request.args.get('ids', '')
@@ -3385,17 +3532,17 @@ def api_procesar_reconocimiento_facial():
         foto_ids = [id.strip() for id in foto_ids if id.strip().isdigit()]
 
         if not foto_ids:
+
             return render_template('etiquetar_caras_individuales.html', caras=[], user=user)
 
         # Obtener fotos con información de personas
-        placeholders = ','.join(['%s' for _ in foto_ids])
-        cursor.execute(f'''
+        placeholders = ','.join(['?' for _ in foto_ids])
+        fotos_recientes = conn.execute(f'''
             SELECT id, nombre, nombre_archivo, mes, año, created_at, personas_ids
             FROM photos 
-            WHERE id IN ({placeholders}) AND user_id = %s
+            WHERE id IN ({placeholders}) AND user_id = ?
             ORDER BY created_at DESC
-        ''', foto_ids + [user['id']])
-        fotos_recientes = cursor.fetchall()
+        ''', foto_ids + [user['id']]).fetchall()
 
         print(f"Fotos encontradas: {len(fotos_recientes)}")
 
@@ -3406,19 +3553,17 @@ def api_procesar_reconocimiento_facial():
         fotos_ya_procesadas = []
         fotos_sin_procesar = []
 
-        columns = [desc[0] for desc in cursor.description]
         for foto in fotos_recientes:
-            foto_dict = dict(zip(columns, foto))
-            if foto_dict['personas_ids'] and foto_dict['personas_ids'].strip() and foto_dict['personas_ids'] != 'null' and not force_reprocess:
-                fotos_ya_procesadas.append(foto_dict)
+            if foto['personas_ids'] and foto['personas_ids'].strip() and foto['personas_ids'] != 'null' and not force_reprocess:
+                fotos_ya_procesadas.append(foto)
                 print(
-                    f"Foto {foto_dict['id']} ya tiene personas: {foto_dict['personas_ids']}")
+                    f"Foto {foto['id']} ya tiene personas: {foto['personas_ids']}")
             else:
-                fotos_sin_procesar.append(foto_dict)
+                fotos_sin_procesar.append(foto)
                 if force_reprocess:
-                    print(f"Foto {foto_dict['id']} será reprocesada (force=true)")
+                    print(f"Foto {foto['id']} será reprocesada (force=true)")
                 else:
-                    print(f"Foto {foto_dict['id']} sin procesar")
+                    print(f"Foto {foto['id']} sin procesar")
 
         # Si todas las fotos ya están procesadas y no se fuerza reprocesamiento, mostrar resumen
         if len(fotos_ya_procesadas) > 0 and len(fotos_sin_procesar) == 0 and not force_reprocess:
@@ -3431,7 +3576,7 @@ def api_procesar_reconocimiento_facial():
                 f"Hay {len(fotos_ya_procesadas)} fotos ya procesadas y {len(fotos_sin_procesar)} sin procesar")
 
         # Procesar las fotos correspondientes
-        fotos_a_procesar = fotos_sin_procesar if not force_reprocess else [dict(zip(columns, foto)) for foto in fotos_recientes]
+        fotos_a_procesar = fotos_sin_procesar if not force_reprocess else fotos_recientes
 
         caras_individuales = []
 
@@ -3509,6 +3654,8 @@ def api_procesar_reconocimiento_facial():
                 except Exception as e:
                     print(f"Error procesando {foto['nombre']}: {e}")
 
+
+
         # Log de rendimiento
         end_time = time.time()
         processing_time = end_time - start_time
@@ -3527,11 +3674,11 @@ def api_procesar_reconocimiento_facial():
         traceback.print_exc()
         return render_template('error.html', message='Error procesando reconocimiento facial'), 500
 
+
 def mostrar_resumen_fotos_procesadas(fotos_procesadas, user, conn):
     """Mostrar resumen de fotos que ya tienen personas identificadas"""
     try:
         import json
-        cursor = conn.cursor()
 
         resumen_fotos = []
 
@@ -3546,14 +3693,13 @@ def mostrar_resumen_fotos_procesadas(fotos_procesadas, user, conn):
             # Obtener nombres de las personas
             personas_nombres = []
             if personas_ids:
-                placeholders = ','.join(['%s' for _ in personas_ids])
-                cursor.execute(f'''
+                placeholders = ','.join(['?' for _ in personas_ids])
+                personas = conn.execute(f'''
                     SELECT id, nombre FROM personas 
                     WHERE id IN ({placeholders})
-                ''', personas_ids)
-                personas = cursor.fetchall()
+                ''', personas_ids).fetchall()
 
-                personas_nombres = [p[1] for p in personas]
+                personas_nombres = [p['nombre'] for p in personas]
 
             resumen_fotos.append({
                 'foto_id': foto['id'],
@@ -3563,13 +3709,14 @@ def mostrar_resumen_fotos_procesadas(fotos_procesadas, user, conn):
                 'personas_nombres': personas_nombres
             })
 
+
+
         return render_template('resumen_fotos_procesadas.html',
                                fotos=resumen_fotos,
                                user=user)
 
-    except Exception as e:
-        print(f"Error mostrando resumen: {e}")
-        return render_template('error.html', message='Error mostrando resumen de fotos'), 500
+    except Exception ase='Error mostrando resumen de fotos'), 500
+
 
 @app.route('/api/debug-info')
 def api_debug_info():
@@ -3577,19 +3724,18 @@ def api_debug_info():
     try:
         # Obtener foto ID 31
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute(
-            'SELECT id, nombre, nombre_archivo FROM photos WHERE id = 31')
-        foto = cursor.fetchone()
+        foto = conn.execute(
+            'SELECT id, nombre, nombre_archivo FROM photos WHERE id = 31').fetchone()
+
 
         if not foto:
             return {"error": "Foto no encontrada"}, 404
 
         # Información básica
         info = {
-            "foto_id": foto[0],
-            "foto_nombre": foto[1],
-            "foto_url": foto[2],
+            "foto_id": foto['id'],
+            "foto_nombre": foto['nombre'],
+            "foto_url": foto['nombre_archivo'],
             "face_api_key": os.getenv('FACEPP_API_KEY')[:10] + "..." if os.getenv('FACEPP_API_KEY') else "No encontrada",
             "cloudinary_configured": bool(os.getenv('CLOUDINARY_CLOUD_NAME'))
         }
@@ -3599,29 +3745,25 @@ def api_debug_info():
     except Exception as e:
         return {"error": str(e)}, 500
 
+
 @app.route('/api/test-one-face')
 def api_test_one_face():
     """Procesar solo UNA cara para debugging"""
     try:
         # Obtener foto ID 31
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute(
-            'SELECT id, nombre, nombre_archivo FROM photos WHERE id = 31')
-        foto = cursor.fetchone()
-        cursor.execute('SELECT * FROM users WHERE id = 1')
-        user_row = cursor.fetchone()
+        foto = conn.execute(
+            'SELECT id, nombre, nombre_archivo FROM photos WHERE id = 31').fetchone()
+        user = conn.execute('SELECT * FROM users WHERE id = 1').fetchone()
 
-        if not foto or not user_row:
+        if not foto or not user:
+
             return {"error": "Foto o usuario no encontrado"}, 404
 
-        # Convertir usuario a dict
-        user_columns = [desc[0] for desc in cursor.description]
-        user = dict(zip(user_columns, user_row))
-
         # Descargar imagen
-        img_response = requests.get(foto[2])
+        img_response = requests.get(foto['nombre_archivo'])
         if img_response.status_code != 200:
+
             return {"error": "Error descargando imagen"}, 400
 
         # Face++
@@ -3641,6 +3783,7 @@ def api_test_one_face():
         face_result = response.json()
 
         if 'faces' not in face_result or len(face_result['faces']) == 0:
+
             return {"error": "No se detectaron caras"}, 400
 
         # Procesar SOLO la primera cara
@@ -3698,21 +3841,24 @@ def api_test_one_face():
         print(f"Resultado Cloudinary: {upload_result}")
 
         if not upload_result.get('secure_url'):
+
             return {"error": "Error subiendo a Cloudinary"}, 500
 
         # Crear array con una sola cara
         caras_individuales = [{
-            'foto_id': foto[0],
-            'foto_nombre': foto[1],
+            'foto_id': foto['id'],
+            'foto_nombre': foto['nombre'],
             'cara_index': 0,
             'face_token': cara['face_token'],
             'recorte_url': upload_result['secure_url'],
             'recorte_public_id': upload_result['public_id'],
-            'cara_id': f"{foto[0]}_0"
+            'cara_id': f"{foto['id']}_0"
         }]
 
         print(f"Array de caras creado: {len(caras_individuales)} elementos")
         print(f"Primera cara URL: {caras_individuales[0]['recorte_url']}")
+
+
 
         # Renderizar template
         return render_template('etiquetar_caras_individuales.html',
@@ -3725,31 +3871,32 @@ def api_test_one_face():
         traceback.print_exc()
         return {"error": str(e)}, 500
 
+
 @app.route('/api/test-face-json')
 def api_test_face_json():
     """Endpoint que devuelve JSON para debugging"""
     try:
         # Obtener foto ID 31
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute(
-            'SELECT id, nombre, nombre_archivo FROM photos WHERE id = 31')
-        foto = cursor.fetchone()
+        foto = conn.execute(
+            'SELECT id, nombre, nombre_archivo FROM photos WHERE id = 31').fetchone()
 
         if not foto:
+
             return {"error": "Foto no encontrada"}, 404
 
         result = {
-            "foto_id": foto[0],
-            "foto_nombre": foto[1],
-            "foto_url": foto[2],
+            "foto_id": foto['id'],
+            "foto_nombre": foto['nombre'],
+            "foto_url": foto['nombre_archivo'],
             "paso": "inicio"
         }
 
         # Descargar imagen
-        img_response = requests.get(foto[2])
+        img_response = requests.get(foto['nombre_archivo'])
         if img_response.status_code != 200:
             result["error"] = f"Error descargando imagen: {img_response.status_code}"
+
             return result, 400
 
         result["imagen_descargada"] = f"{len(img_response.content)} bytes"
@@ -3780,6 +3927,7 @@ def api_test_face_json():
         else:
             result["caras_detectadas"] = 0
 
+
         return result
 
     except Exception as e:
@@ -3789,35 +3937,30 @@ def api_test_face_json():
             "traceback": traceback.format_exc()
         }, 500
 
+
 @app.route('/api/test-face-simple')
 def api_test_face_simple():
     """Endpoint simple para probar Face++ con método de archivo"""
     try:
         # Obtener foto ID 31
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute(
-            'SELECT id, nombre, nombre_archivo FROM photos WHERE id = 31')
-        foto = cursor.fetchone()
-        cursor.execute('SELECT * FROM users WHERE id = 1')
-        user_row = cursor.fetchone()
+        foto = conn.execute(
+            'SELECT id, nombre, nombre_archivo FROM photos WHERE id = 31').fetchone()
+        user = conn.execute('SELECT * FROM users WHERE id = 1').fetchone()
 
-        if not foto or not user_row:
+        if not foto or not user:
+
             return {"error": "Foto o usuario no encontrado"}, 404
 
-        # Convertir usuario a dict
-        user_columns = [desc[0] for desc in cursor.description]
-        user = dict(zip(user_columns, user_row))
-
-        print(f"Procesando foto: {foto[1]}")
-        print(f"URL: {foto[2]}")
+        print(f"Procesando foto: {foto['nombre']}")
+        print(f"URL: {foto['nombre_archivo']}")
 
         # Usar el método de tu ejemplo: descargar imagen y enviar archivo
         api_key = os.getenv('FACEPP_API_KEY')
         api_secret = os.getenv('FACEPP_API_SECRET')
 
         # Descargar imagen
-        img_response = requests.get(foto[2])
+        img_response = requests.get(foto['nombre_archivo'])
         if img_response.status_code != 200:
             return {"error": "No se pudo descargar la imagen"}, 400
 
@@ -3840,6 +3983,7 @@ def api_test_face_simple():
         print(f"Respuesta Face++: {result}")
 
         if 'faces' not in result or len(result['faces']) == 0:
+
             return render_template('etiquetar_caras_individuales.html', caras=[], user=user)
 
         faces = result['faces']
@@ -3891,19 +4035,21 @@ def api_test_face_simple():
 
                 if upload_result.get('secure_url'):
                     caras_individuales.append({
-                        'foto_id': foto[0],
-                        'foto_nombre': foto[1],
+                        'foto_id': foto['id'],
+                        'foto_nombre': foto['nombre'],
                         'cara_index': idx,
                         'face_token': cara['face_token'],
                         'recorte_url': upload_result['secure_url'],
                         'recorte_public_id': upload_result['public_id'],
-                        'cara_id': f"{foto[0]}_{idx}"
+                        'cara_id': f"{foto['id']}_{idx}"
                     })
                     print(
                         f"Cara {idx + 1} procesada: {upload_result['secure_url']}")
 
             except Exception as e:
                 print(f"Error procesando cara {idx + 1}: {e}")
+
+
 
         print(f"RESULTADO: {len(caras_individuales)} caras procesadas")
 
@@ -3917,40 +4063,24 @@ def api_test_face_simple():
         traceback.print_exc()
         return {"error": str(e)}, 500
 
+
 @app.route('/api/test-gestionar-personas')
 def api_test_gestionar_personas():
     """Probar gestión de personas sin autenticación"""
     try:
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM users WHERE id = 1')
-        user_row = cursor.fetchone()
-
-        # Convertir usuario a dict
-        user_columns = [desc[0] for desc in cursor.description]
-        user = dict(zip(user_columns, user_row))
+        user = conn.execute('SELECT * FROM users WHERE id = 1').fetchone()
 
         # Obtener todas las personas
-        cursor.execute('''
+        personas = conn.execute('''
             SELECT id, nombre, imagen, created_at 
             FROM personas 
             ORDER BY nombre
-        ''')
-        personas = cursor.fetchall()
+        ''').fetchall()
 
-        # Convertir a lista de diccionarios
-        personas_list = []
-        columns = [desc[0] for desc in cursor.description]
-        for persona in personas:
-            persona_dict = dict(zip(columns, persona))
-            personas_list.append({
-                'id': persona_dict['id'],
-                'nombre': persona_dict['nombre'],
-                'imagen': persona_dict['imagen'],
-                'created_at': persona_dict['created_at']
-            })
 
-        return render_template('gestionar_personas.html', personas=personas_list, user=user)
+
+        return render_template('gestionar_personas.html', personas=personas, user=user)
 
     except Exception as e:
         print(f"Error: {e}")
@@ -3958,39 +4088,31 @@ def api_test_gestionar_personas():
         traceback.print_exc()
         return {"error": str(e)}, 500
 
+
 @app.route('/api/test-foto-procesada')
 def api_test_foto_procesada():
     """Probar foto ya procesada sin autenticación"""
     try:
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM users WHERE id = 1')
-        user_row = cursor.fetchone()
-
-        # Convertir usuario a dict
-        user_columns = [desc[0] for desc in cursor.description]
-        user = dict(zip(user_columns, user_row))
+        user = conn.execute('SELECT * FROM users WHERE id = 1').fetchone()
 
         # Obtener foto ID 1 que ya tiene personas
-        cursor.execute(
-            'SELECT id, nombre, nombre_archivo, personas_ids FROM photos WHERE id = 1')
-        foto = cursor.fetchone()
+        foto = conn.execute(
+            'SELECT id, nombre, nombre_archivo, personas_ids FROM photos WHERE id = 1').fetchone()
 
         if not foto:
+
             return {"error": "Foto no encontrada"}, 404
 
-        # Convertir foto a dict
-        foto_columns = [desc[0] for desc in cursor.description]
-        foto_dict = dict(zip(foto_columns, foto))
-
-        print(f"Foto ID 1 - personas_ids: {foto_dict['personas_ids']}")
+        print(f"Foto ID 1 - personas_ids: {foto['personas_ids']}")
 
         # Verificar si tiene personas
-        if foto_dict['personas_ids'] and foto_dict['personas_ids'].strip() and foto_dict['personas_ids'] != 'null':
+        if foto['personas_ids'] and foto['personas_ids'].strip() and foto['personas_ids'] != 'null':
             print("Foto ya procesada, mostrando resumen")
-            return mostrar_resumen_fotos_procesadas([foto_dict], user, conn)
+            return mostrar_resumen_fotos_procesadas([foto], user, conn)
         else:
             print("Foto sin procesar")
+
             return {"message": "Foto sin procesar"}
 
     except Exception as e:
@@ -3999,22 +4121,18 @@ def api_test_foto_procesada():
         traceback.print_exc()
         return {"error": str(e)}, 500
 
+
 @app.route('/api/test-procesar-reconocimiento-facial')
 def api_test_procesar_reconocimiento_facial():
     """API de prueba para procesar reconocimiento facial SIN autenticación"""
     try:
         # Obtener usuario ID 1 para pruebas
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM users WHERE id = 1')
-        user_row = cursor.fetchone()
+        user = conn.execute('SELECT * FROM users WHERE id = 1').fetchone()
 
-        if not user_row:
+        if not user:
+
             return render_template('error.html', message='Usuario no encontrado'), 404
-
-        # Convertir usuario a dict
-        user_columns = [desc[0] for desc in cursor.description]
-        user = dict(zip(user_columns, user_row))
 
         # Obtener IDs de fotos específicas desde la query string
         ids_param = request.args.get('ids', '')
@@ -4027,28 +4145,26 @@ def api_test_procesar_reconocimiento_facial():
 
         if not foto_ids:
             print("❌ No hay IDs válidos para procesar")
+
             return render_template('etiquetar_caras_individuales.html', caras=[], user=user)
 
         # Obtener la foto específica
-        placeholders = ','.join(['%s' for _ in foto_ids])
-        cursor.execute(f'''
+        placeholders = ','.join(['?' for _ in foto_ids])
+        fotos_recientes = conn.execute(f'''
             SELECT id, nombre, nombre_archivo, mes, año, created_at
             FROM photos 
-            WHERE id IN ({placeholders}) AND user_id = %s
+            WHERE id IN ({placeholders}) AND user_id = ?
             ORDER BY created_at DESC
-        ''', foto_ids + [user['id']])
-        fotos_recientes = cursor.fetchall()
+        ''', foto_ids + [user['id']]).fetchall()
 
         print(f"📸 Fotos encontradas: {len(fotos_recientes)}")
 
         caras_individuales = []
 
         # Procesar cada foto usando el código que sabemos que funciona
-        columns = [desc[0] for desc in cursor.description]
         for foto in fotos_recientes:
-            foto_dict = dict(zip(columns, foto))
-            print(f"🔍 Procesando foto: {foto_dict['nombre']}")
-            print(f"🔗 URL: {foto_dict['nombre_archivo']}")
+            print(f"🔍 Procesando foto: {foto['nombre']}")
+            print(f"🔗 URL: {foto['nombre_archivo']}")
 
             # Usar la misma lógica que en debug_processing.py
             api_key = os.getenv('FACEPP_API_KEY')
@@ -4063,7 +4179,7 @@ def api_test_procesar_reconocimiento_facial():
             data = {
                 'api_key': api_key,
                 'api_secret': api_secret,
-                'image_url': foto_dict['nombre_archivo'],
+                'image_url': foto['nombre_archivo'],
                 'return_attributes': 'age,gender'
             }
 
@@ -4089,7 +4205,7 @@ def api_test_procesar_reconocimiento_facial():
                         from PIL import Image
                         from io import BytesIO
 
-                        img_response = requests.get(foto_dict['nombre_archivo'])
+                        img_response = requests.get(foto['nombre_archivo'])
                         if img_response.status_code == 200:
                             image = Image.open(BytesIO(img_response.content))
 
@@ -4130,13 +4246,13 @@ def api_test_procesar_reconocimiento_facial():
 
                             if upload_result.get('secure_url'):
                                 caras_individuales.append({
-                                    'foto_id': foto_dict['id'],
-                                    'foto_nombre': foto_dict['nombre'],
+                                    'foto_id': foto['id'],
+                                    'foto_nombre': foto['nombre'],
                                     'cara_index': idx,
                                     'face_token': face_token,
                                     'recorte_url': upload_result['secure_url'],
                                     'recorte_public_id': upload_result['public_id'],
-                                    'cara_id': f"{foto_dict['id']}_{idx}"
+                                    'cara_id': f"{foto['id']}_{idx}"
                                 })
                                 print(
                                     f"✅ Cara {idx + 1} procesada: {upload_result['secure_url']}")
@@ -4146,10 +4262,12 @@ def api_test_procesar_reconocimiento_facial():
                             print(
                                 f"❌ Error descargando imagen para cara {idx + 1}")
                 else:
-                    print(f"ℹ️ No se detectaron caras en {foto_dict['nombre']}")
+                    print(f"ℹ️ No se detectaron caras en {foto['nombre']}")
 
             except Exception as e:
-                print(f"❌ Error procesando {foto_dict['nombre']}: {e}")
+                print(f"❌ Error procesando {foto['nombre']}: {e}")
+
+
 
         print(f"🎯 RESUMEN FINAL:")
         print(f"   - Fotos procesadas: {len(fotos_recientes)}")
@@ -4164,6 +4282,7 @@ def api_test_procesar_reconocimiento_facial():
         import traceback
         traceback.print_exc()
         return render_template('error.html', message='Error procesando reconocimiento facial'), 500
+
 
 @app.route('/api/guardar-etiquetas-personas', methods=['POST'])
 @require_auth
@@ -4184,7 +4303,6 @@ def api_guardar_etiquetas_personas():
             return jsonify({'success': True, 'message': 'No hay etiquetas para guardar'})
 
         conn = get_db()
-        cursor = conn.cursor()
         personas_creadas = 0
         fotos_actualizadas = 0
 
@@ -4194,19 +4312,18 @@ def api_guardar_etiquetas_personas():
             personas_ids = []
 
             # Obtener datos de la foto para crear recortes
-            cursor.execute(
-                'SELECT nombre_archivo FROM photos WHERE id = %s AND user_id = %s',
+            foto_data = conn.execute(
+                'SELECT nombre_archivo FROM photos WHERE id = ? AND user_id = ?',
                 (foto_id, user['id'])
-            )
-            foto_data = cursor.fetchone()
+            ).fetchone()
 
             if not foto_data:
                 continue
 
             # Detectar caras de nuevo para obtener coordenadas de recorte
             print(
-                f"🔍 Detectando caras para recortes en foto {foto_id}: {foto_data[0]}")
-            caras_detectadas = detect_faces_facepp(foto_data[0])
+                f"🔍 Detectando caras para recortes en foto {foto_id}: {foto_data['nombre_archivo']}")
+            caras_detectadas = detect_faces_facepp(foto_data['cloudinary_url'])
             print(
                 f"📊 Caras detectadas para recortes: {len(caras_detectadas) if caras_detectadas else 0}")
 
@@ -4219,26 +4336,25 @@ def api_guardar_etiquetas_personas():
                 print(f"👤 Procesando persona: '{nombre}' (índice {idx})")
 
                 # Verificar si la persona ya existe
-                cursor.execute(
-                    'SELECT id, imagen FROM personas WHERE nombre = %s', (
+                persona_existente = conn.execute(
+                    'SELECT id, imagen FROM personas WHERE nombre = ?', (
                         nombre,)
-                )
-                persona_existente = cursor.fetchone()
+                ).fetchone()
 
                 if persona_existente:
                     print(
-                        f"✅ Persona existente encontrada: ID={persona_existente[0]}, imagen={persona_existente[1] or 'SIN IMAGEN'}")
-                    personas_ids.append(persona_existente[0])
+                        f"✅ Persona existente encontrada: ID={persona_existente['id']}, imagen={persona_existente['imagen'] or 'SIN IMAGEN'}")
+                    personas_ids.append(persona_existente['id'])
 
                     # Si la persona existe pero no tiene imagen, agregar recorte
-                    if not persona_existente[1] and idx < len(caras_detectadas):
+                    if not persona_existente['imagen'] and idx < len(caras_detectadas):
                         print(
                             f"🖼️ Creando recorte para persona existente: {nombre} (índice {idx})")
                         face_token = caras_detectadas[idx]['face_token']
-                        print(f"🔑 Face token: {face_token}")
+                        print(f"� Foace token: {face_token}")
 
                         face_crop = get_face_crop_from_facepp(
-                            foto_data[0], face_token)
+                            foto_data['nombre_archivo'], face_token)
 
                         if face_crop:
                             print(
@@ -4247,11 +4363,11 @@ def api_guardar_etiquetas_personas():
                                 face_crop, nombre)
                             if upload_result['success']:
                                 # Actualizar persona con imagen de recorte
-                                cursor.execute('''
+                                conn.execute('''
                                     UPDATE personas 
-                                    SET imagen = %s, updated_at = %s
-                                    WHERE id = %s
-                                ''', (upload_result['url'], datetime.now(), persona_existente[0]))
+                                    SET imagen = ?, updated_at = ?
+                                    WHERE id = ?
+                                ''', (upload_result['url'], datetime.now(), persona_existente['id']))
                                 print(
                                     f"✅ Recorte guardado para persona existente: {nombre} -> {upload_result['url']}")
                             else:
@@ -4261,9 +4377,9 @@ def api_guardar_etiquetas_personas():
                             print(
                                 f"❌ No se pudo obtener recorte de Face++ para {nombre}")
                     else:
-                        if persona_existente[1]:
+                        if persona_existente['imagen']:
                             print(
-                                f"ℹ️ Persona {nombre} ya tiene imagen: {persona_existente[1]}")
+                                f"ℹ️ Persona {nombre} ya tiene imagen: {persona_existente['imagen']}")
                         else:
                             print(
                                 f"⚠️ No hay cara detectada para índice {idx} (total: {len(caras_detectadas)})")
@@ -4278,7 +4394,7 @@ def api_guardar_etiquetas_personas():
                             f"🖼️ Creando recorte para nueva persona: {nombre} con face_token: {face_token}")
 
                         face_crop = get_face_crop_from_facepp(
-                            foto_data[0], face_token)
+                            foto_data['nombre_archivo'], face_token)
 
                         if face_crop:
                             upload_result = upload_face_crop_to_cloudinary(
@@ -4295,27 +4411,26 @@ def api_guardar_etiquetas_personas():
                                 f"❌ No se pudo obtener recorte de Face++ para nueva persona {nombre}")
 
                     # Crear nueva persona con o sin imagen
-                    cursor.execute('''
+                    cursor = conn.execute('''
                         INSERT INTO personas (nombre, imagen, created_at, updated_at)
-                        VALUES (%s, %s, %s, %s)
-                        RETURNING id
+                        VALUES (?, ?, ?, ?)
                     ''', (nombre, imagen_url, datetime.now(), datetime.now()))
 
-                    new_person_id = cursor.fetchone()[0]
-                    personas_ids.append(new_person_id)
+                    personas_ids.append(cursor.lastrowid)
                     personas_creadas += 1
 
             # Actualizar la foto con las personas identificadas
             if personas_ids:
                 personas_ids_json = json.dumps(personas_ids)
-                cursor.execute('''
+                conn.execute('''
                     UPDATE photos 
-                    SET personas_ids = %s, updated_at = %s
-                    WHERE id = %s AND user_id = %s
+                    SET personas_ids = ?, updated_at = ?
+                    WHERE id = ? AND user_id = ?
                 ''', (personas_ids_json, datetime.now(), foto_id, user['id']))
                 fotos_actualizadas += 1
 
         conn.commit()
+
 
         log_user_action(user['id'], 'SAVE_PERSON_TAGS',
                         f'Created {personas_creadas} persons, updated {fotos_actualizadas} photos')
@@ -4334,20 +4449,14 @@ def api_guardar_etiquetas_personas():
                   f'User: {user["id"] if user else "Unknown"}')
         return jsonify({'success': False, 'message': 'Error interno del servidor'}), 500
 
+
 @app.route('/api/guardar-identificaciones-caras', methods=['POST'])
 @require_auth
 def api_guardar_identificaciones_caras():
     """API para guardar identificaciones de caras individuales"""
-    user = None
     try:
         user = get_current_user()
-        if not user:
-            return jsonify({'success': False, 'message': 'Usuario no autenticado'}), 401
-            
         data = request.get_json()
-        if not data:
-            return jsonify({'success': False, 'message': 'Datos inválidos'}), 400
-            
         identificaciones = data.get('identificaciones', [])
 
         print(f"🚀 INICIO - Guardar identificaciones de caras")
@@ -4359,73 +4468,36 @@ def api_guardar_identificaciones_caras():
             return jsonify({'success': True, 'message': 'No hay identificaciones para guardar'})
 
         conn = get_db()
-        cursor = conn.cursor()
         personas_creadas = 0
         fotos_actualizadas = {}  # Dict para evitar duplicados por foto
 
         for identificacion in identificaciones:
-            try:
-                nombre = identificacion['nombre'].strip()
-                foto_id = identificacion['foto_id']
-                recorte_url = identificacion['recorte_url']
-                recorte_public_id = identificacion['recorte_public_id']
+            nombre = identificacion['nombre'].strip()
+            foto_id = identificacion['foto_id']
+            recorte_url = identificacion['recorte_url']
+            recorte_public_id = identificacion['recorte_public_id']
 
-                if not nombre:
-                    continue
+            if not nombre:
+                continue
 
+            print(
+                f"👤 Procesando identificación: '{nombre}' para foto {foto_id}")
+
+            # Verificar si la persona ya existe
+            persona_existente = conn.execute(
+                'SELECT id, imagen FROM personas WHERE nombre = ?', (nombre,)
+            ).fetchone()
+
+            if persona_existente:
                 print(
-                    f"👤 Procesando identificación: '{nombre}' para foto {foto_id}")
+                    f"✅ Persona existente: {nombre} (ID: {persona_existente['id']})")
+                persona_id = persona_existente['id']
 
-                # Verificar si la persona ya existe
-                cursor.execute(
-                    'SELECT id, imagen FROM personas WHERE nombre = %s', (nombre,)
-                )
-                persona_existente = cursor.fetchone()
-
-                if persona_existente:
-                    print(
-                        f"✅ Persona existente: {nombre} (ID: {persona_existente[0]})")
-                    persona_id = persona_existente[0]
-
-                    # Si no tiene imagen, usar el recorte como imagen permanente
-                    if not persona_existente[1]:
-                        # Mover de temp_faces a personas
-                        try:
-                            # Copiar imagen a carpeta personas
-                            import uuid
-                            new_filename = f"person_{nombre.replace(' ', '_')}_{uuid.uuid4().hex[:8]}.jpg"
-
-                            copy_result = cloudinary.uploader.upload(
-                                recorte_url,
-                                folder="personas",
-                                public_id=new_filename,
-                                resource_type="image",
-                                format="jpg"
-                            )
-
-                            if copy_result.get('secure_url'):
-                                # Actualizar persona con nueva imagen
-                                cursor.execute('''
-                                    UPDATE personas 
-                                    SET imagen = %s, updated_at = %s
-                                    WHERE id = %s
-                                ''', (copy_result['secure_url'], datetime.now(), persona_id))
-                                print(
-                                    f"✅ Imagen actualizada para {nombre}: {copy_result['secure_url']}")
-
-                            # Eliminar imagen temporal
-                            cloudinary.uploader.destroy(recorte_public_id)
-
-                        except Exception as e:
-                            print(f"⚠️ Error moviendo imagen para {nombre}: {e}")
-
-                else:
-                    # Crear nueva persona con el recorte como imagen
-                    print(f"🆕 Creando nueva persona: {nombre}")
-
-                    # Mover imagen de temp_faces a personas
-                    imagen_url = None
+                # Si no tiene imagen, usar el recorte como imagen permanente
+                if not persona_existente['imagen']:
+                    # Mover de temp_faces a personas
                     try:
+                        # Copiar imagen a carpeta personas
                         import uuid
                         new_filename = f"person_{nombre.replace(' ', '_')}_{uuid.uuid4().hex[:8]}.jpg"
 
@@ -4438,82 +4510,97 @@ def api_guardar_identificaciones_caras():
                         )
 
                         if copy_result.get('secure_url'):
-                            imagen_url = copy_result['secure_url']
+                            # Actualizar persona con nueva imagen
+                            conn.execute('''
+                                UPDATE personas 
+                                SET imagen = ?, updated_at = ?
+                                WHERE id = ?
+                            ''', (copy_result['secure_url'], datetime.now(), persona_id))
                             print(
-                                f"✅ Imagen copiada para nueva persona {nombre}: {imagen_url}")
+                                f"✅ Imagen actualizada para {nombre}: {copy_result['secure_url']}")
 
                         # Eliminar imagen temporal
                         cloudinary.uploader.destroy(recorte_public_id)
 
                     except Exception as e:
+                        print(f"⚠️ Error moviendo imagen para {nombre}: {e}")
+
+            else:
+                # Crear nueva persona con el recorte como imagen
+                print(f"🆕 Creando nueva persona: {nombre}")
+
+                # Mover imagen de temp_faces a personas
+                imagen_url = None
+                try:
+                    import uuid
+                    new_filename = f"person_{nombre.replace(' ', '_')}_{uuid.uuid4().hex[:8]}.jpg"
+
+                    copy_result = cloudinary.uploader.upload(
+                        recorte_url,
+                        folder="personas",
+                        public_id=new_filename,
+                        resource_type="image",
+                        format="jpg"
+                    )
+
+                    if copy_result.get('secure_url'):
+                        imagen_url = copy_result['secure_url']
                         print(
-                            f"⚠️ Error copiando imagen para nueva persona {nombre}: {e}")
+                            f"✅ Imagen copiada para nueva persona {nombre}: {imagen_url}")
 
-                    # Crear persona
-                    cursor.execute('''
-                        INSERT INTO personas (nombre, imagen, created_at, updated_at)
-                        VALUES (%s, %s, %s, %s)
-                        RETURNING id
-                    ''', (nombre, imagen_url, datetime.now(), datetime.now()))
+                    # Eliminar imagen temporal
+                    cloudinary.uploader.destroy(recorte_public_id)
 
-                    persona_id = cursor.fetchone()[0]
-                    personas_creadas += 1
-                    print(f"✅ Nueva persona creada: {nombre} (ID: {persona_id})")
+                except Exception as e:
+                    print(
+                        f"⚠️ Error copiando imagen para nueva persona {nombre}: {e}")
 
-                # Agregar persona a la foto (evitar duplicados)
-                if foto_id not in fotos_actualizadas:
-                    fotos_actualizadas[foto_id] = []
-                fotos_actualizadas[foto_id].append(persona_id)
+                # Crear persona
+                cursor = conn.execute('''
+                    INSERT INTO personas (nombre, imagen, created_at, updated_at)
+                    VALUES (?, ?, ?, ?)
+                ''', (nombre, imagen_url, datetime.now(), datetime.now()))
 
-            except KeyError as e:
-                print(f"⚠️ Error en identificación, falta clave: {e}")
-                continue
-            except Exception as e:
-                print(f"⚠️ Error procesando identificación: {e}")
-                continue
+                persona_id = cursor.lastrowid
+                personas_creadas += 1
+                print(f"✅ Nueva persona creada: {nombre} (ID: {persona_id})")
+
+            # Agregar persona a la foto (evitar duplicados)
+            if foto_id not in fotos_actualizadas:
+                fotos_actualizadas[foto_id] = []
+            fotos_actualizadas[foto_id].append(persona_id)
 
         # Actualizar fotos con personas identificadas
         for foto_id, personas_ids in fotos_actualizadas.items():
-            try:
-                # Obtener personas_ids existentes
-                cursor.execute(
-                    'SELECT personas_ids FROM photos WHERE id = %s AND user_id = %s',
-                    (foto_id, user['id'])
-                )
-                foto_actual = cursor.fetchone()
+            # Obtener personas_ids existentes
+            foto_actual = conn.execute(
+                'SELECT personas_ids FROM photos WHERE id = ? AND user_id = ?',
+                (foto_id, user['id'])
+            ).fetchone()
 
-                personas_existentes = []
-                if foto_actual and foto_actual[0]:
-                    try:
-                        # En PostgreSQL, los datos JSON se pueden almacenar como texto
-                        # pero también se pueden manejar como objetos JSON
-                        if isinstance(foto_actual[0], str):
-                            personas_existentes = json.loads(foto_actual[0])
-                        else:
-                            # Si ya es una lista (caso poco probable pero por si acaso)
-                            personas_existentes = list(foto_actual[0]) if isinstance(foto_actual[0], (list, tuple)) else []
-                    except Exception as e:
-                        print(f"⚠️ Error parseando personas_ids: {e}")
-                        personas_existentes = []
+            personas_existentes = []
+            if foto_actual and foto_actual['personas_ids']:
+                try:
+                    personas_existentes = json.loads(
+                        foto_actual['personas_ids'])
+                except:
+                    personas_existentes = []
 
-                # Combinar con nuevas personas (evitar duplicados)
-                todas_personas = list(set(personas_existentes + personas_ids))
-                personas_ids_json = json.dumps(todas_personas)
+            # Combinar con nuevas personas (evitar duplicados)
+            todas_personas = list(set(personas_existentes + personas_ids))
+            personas_ids_json = json.dumps(todas_personas)
 
-                cursor.execute('''
-                    UPDATE photos 
-                    SET personas_ids = %s, updated_at = %s
-                    WHERE id = %s AND user_id = %s
-                ''', (personas_ids_json, datetime.now(), foto_id, user['id']))
+            conn.execute('''
+                UPDATE photos 
+                SET personas_ids = ?, updated_at = ?
+                WHERE id = ? AND user_id = ?
+            ''', (personas_ids_json, datetime.now(), foto_id, user['id']))
 
-                print(
-                    f"✅ Foto {foto_id} actualizada con personas: {todas_personas}")
-
-            except Exception as e:
-                print(f"⚠️ Error actualizando foto {foto_id}: {e}")
-                continue
+            print(
+                f"✅ Foto {foto_id} actualizada con personas: {todas_personas}")
 
         conn.commit()
+
 
         log_user_action(user['id'], 'SAVE_FACE_IDENTIFICATIONS',
                         f'Created {personas_creadas} persons, updated {len(fotos_actualizadas)} photos')
@@ -4530,24 +4617,16 @@ def api_guardar_identificaciones_caras():
     except Exception as e:
         log_error('api_guardar_identificaciones_caras', e,
                   f'User: {user["id"] if user else "Unknown"}')
-        # Devolver un mensaje más específico si es posible
-        error_message = 'Error interno del servidor'
-        if user is None:
-            error_message = 'Error de autenticación'
-        return jsonify({'success': False, 'message': error_message}), 500
+        return jsonify({'success': False, 'message': 'Error interno del servidor'}), 500
+
 
 @app.route('/robots.txt')
 def robots_txt():
     """Servir robots.txt para SEO"""
     return app.send_static_file('robots.txt')
 
-@app.route('/init-db')
-def init_db_route():
-    init_db()
-    return "Database initialized"
 
 if __name__ == '__main__':
-    with app.app_context():
-        init_db()
+    init_db()
     app_logger.info("APLICACION INICIADA")
     app.run( host='0.0.0.0', port=8000)
