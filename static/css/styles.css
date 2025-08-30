@@ -641,3 +641,43 @@ body.htmx-request .htmx-indicator,
 .htmx-indicator {
   display: none !important;
 }
+
+/* ===== ESTILOS RESPONSIVE PARA BOTONES DE ACCIÓN ===== */
+@media (max-width: 575.98px) {
+  .action-buttons {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  
+  .action-buttons .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .search-and-view {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  
+  .search-and-view > div {
+    width: 100%;
+  }
+  
+  .search-and-view .form-control {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Asegurar que los botones tengan un tamaño táctil adecuado */
+.btn-touch-friendly {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.5rem 1rem;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

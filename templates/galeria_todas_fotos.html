@@ -343,7 +343,11 @@
       alert('Error al eliminar las fotos');
     }
   }
-  function etiquetarFoto(id) {
-    console.log(`Etiquetar foto con ID: ${id}`);
+   function etiquetarFoto(fotoId) {
+    // Redirigir al procesamiento de reconocimiento facial para esta foto específica
+    htmx.ajax('GET', `/api/procesar-reconocimiento-facial?ids=${fotoId}`, {
+      target: '#panel-content',
+      swap: 'innerHTML'
+    });
   }
 </script>
