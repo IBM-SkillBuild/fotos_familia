@@ -1024,7 +1024,13 @@ def dashboard():
 
     # Preparar información de sesión
     if user['token_expires']:
-        expires = datetime.fromisoformat(user['token_expires'])
+        # Verificar si token_expires ya es un objeto datetime o es una cadena
+        if isinstance(user['token_expires'], str):
+            expires = datetime.fromisoformat(user['token_expires'])
+        else:
+            # Si ya es un objeto datetime, usarlo directamente
+            expires = user['token_expires']
+            
         time_left = expires - datetime.now()
         total_minutes = int(time_left.total_seconds() / 60)
 
@@ -1053,10 +1059,30 @@ def dashboard():
             'is_expiring_soon': True
         }
 
+    # Formatear la fecha de expiración correctamente
+    if user['token_expires']:
+        if isinstance(user['token_expires'], str):
+            expires_at = user['token_expires'][:19] if len(user['token_expires']) > 19 else user['token_expires']
+        else:
+            # Si es un objeto datetime, formatearlo
+            expires_at = user['token_expires'].strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        expires_at = 'No definido'
+        
+    # Formatear la fecha de creación correctamente
+    if user['created_at']:
+        if isinstance(user['created_at'], str):
+            created_at = user['created_at'][:19] if len(user['created_at']) > 19 else user['created_at']
+        else:
+            # Si es un objeto datetime, formatearlo
+            created_at = user['created_at'].strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        created_at = 'No definido'
+
     session_info = {
-        'expires_at': user['token_expires'][:19] if user['token_expires'] else 'No definido',
+        'expires_at': expires_at,
         'user_id': user['id'],
-        'created_at': user['created_at'][:19] if user['created_at'] else 'No definido',
+        'created_at': created_at,
         **session_time_info  # Agregar la información de tiempo
     }
 
@@ -1094,7 +1120,13 @@ def dashboard_content():
 
     # Preparar información de sesión (reutilizar lógica)
     if user['token_expires']:
-        expires = datetime.fromisoformat(user['token_expires'])
+        # Verificar si token_expires ya es un objeto datetime o es una cadena
+        if isinstance(user['token_expires'], str):
+            expires = datetime.fromisoformat(user['token_expires'])
+        else:
+            # Si ya es un objeto datetime, usarlo directamente
+            expires = user['token_expires']
+            
         time_left = expires - datetime.now()
         total_minutes = int(time_left.total_seconds() / 60)
 
@@ -1123,10 +1155,30 @@ def dashboard_content():
             'is_expiring_soon': True
         }
 
+    # Formatear la fecha de expiración correctamente
+    if user['token_expires']:
+        if isinstance(user['token_expires'], str):
+            expires_at = user['token_expires'][:19] if len(user['token_expires']) > 19 else user['token_expires']
+        else:
+            # Si es un objeto datetime, formatearlo
+            expires_at = user['token_expires'].strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        expires_at = 'No definido'
+        
+    # Formatear la fecha de creación correctamente
+    if user['created_at']:
+        if isinstance(user['created_at'], str):
+            created_at = user['created_at'][:19] if len(user['created_at']) > 19 else user['created_at']
+        else:
+            # Si es un objeto datetime, formatearlo
+            created_at = user['created_at'].strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        created_at = 'No definido'
+
     session_info = {
-        'expires_at': user['token_expires'][:19] if user['token_expires'] else 'No definido',
+        'expires_at': expires_at,
         'user_id': user['id'],
-        'created_at': user['created_at'][:19] if user['created_at'] else 'No definido',
+        'created_at': created_at,
         **session_time_info
     }
 
@@ -1134,19 +1186,6 @@ def dashboard_content():
                     'Dashboard content loaded')
     return render_template('dashboard_content.html', user=user, session_info=session_info)
 
-@app.route('/profile')
-@require_auth
-def profile():
-    """Página de perfil de usuario"""
-    user = get_current_user()
-    log_user_action(user['id'], 'VIEW_PROFILE', 'Profile page accessed')
-
-    # Si es HTMX, devolver solo contenido para inyección
-    if request.headers.get('HX-Request'):
-        return render_template('profile.html', user=user)
-
-    # Si es acceso directo, redirigir al panel principal
-    return redirect(url_for('main_panel'))
 
 @app.route('/profile-content')
 @require_auth

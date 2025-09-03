@@ -248,9 +248,7 @@
       }
     </style>
     
-    
-
-    <style>
+   <style>
       @keyframes float {
         0%,
         100% {
@@ -387,8 +385,6 @@
         }
       }
 
-      
-
       /* Efecto de respiración solo para el contenedor del spinner */
       .loading-indicator .spinner-border {
         animation: breathe 2s ease-in-out infinite;
@@ -417,6 +413,7 @@
         }
       }
 
+      /* Estilos para la barra de herramientas de la galería */
       #gallery-navbar-row {
         position: fixed;
         left: 0;
@@ -428,35 +425,56 @@
         margin: 0 !important;
         background-color: rgba(0, 0, 0, 0.05);
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
       }
 
-      @media (max-width: 576px) {
+      #gallery-navbar-row .search-and-view {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      #gallery-navbar-row .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      @media (max-width: 768px) {
+        #panel-content{
+  margin-top: 180px !important;
+}
         #gallery-navbar-row {
-          flex-direction: column !important;
-          align-items: stretch !important;
+          flex-direction: column;
+          align-items: stretch;
         }
-        #gallery-navbar-row .d-flex.align-items-center {
+
+        #gallery-navbar-row .search-and-view {
+          margin-top: 1em;
+          margin-bottom: 0.75rem;
           flex-direction: column;
           align-items: stretch;
           width: 100%;
-          gap: 0.5rem;
         }
-        #gallery-navbar-row input.form-control {
-          width: 100% !important;
-          margin-left: 0 !important;
-        }
-        #gallery-navbar-row .btn {
-          width: 100%;
-          font-size: 0.9rem;
-        }
-        #gallery-navbar-row .d-flex.gap-2 {
+        
+
+        #gallery-navbar-row .action-buttons {
           flex-direction: column;
-          gap: 0.5rem;
-          margin-right: 0 !important;
+          align-items: stretch;
+          width: 100%;
+        }
+
+        #gallery-navbar-row .action-buttons .btn,
+        #gallery-navbar-row .search-and-view .btn {
+          width: 100%;
+          margin-bottom: 0.5rem;
+          justify-content: center;
         }
       }
     </style>
   </head>
+
   <body
     x-data="{ init() { console.log('Alpine Store initialized:', $store.app) } }"
     x-init="init()"
@@ -558,13 +576,7 @@
     </div>
 
     <!-- Contenedor principal para contenido -->
-    <div
-      id="main-content"
-      hx-get="/initial-content"
-      hx-trigger="load delay:3000ms"
-      hx-swap="innerHTML"
-      hx-indicator="#loading-indicator"
-    >
+    <div id="main-content">
       <!-- Contenido estático inicial para SEO -->
       <main class="hero-section text-center py-5" style="background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center;">
         <div class="container">
@@ -602,36 +614,12 @@
             </div>
           </div>
           <div class="cta-section">
-            <p class="text-light mb-4" style="opacity: 0.7;">
-              <i class="fas fa-info-circle me-2"></i>
-              El contenido se cargará automáticamente. Si no ves la página de login, 
-              <a href="#" onclick="location.reload()" class="text-primary text-decoration-none">haz clic aquí</a>.
-            </p>
-            
-            <!-- Indicador de carga mejorado -->
-            <div class="loading-indicator text-center mt-4" id="loading-indicator">
-              <div class="d-flex align-items-center justify-content-center mb-3">
-                <div class="spinner-border text-primary me-3" role="status" style="width: 2rem; height: 2rem;">
-                  <span class="visually-hidden">Cargando...</span>
-                </div>
-                <div class="loading-dots">
-                  <span class="dot"></span>
-                  <span class="dot"></span>
-                  <span class="dot"></span>
-                </div>
-              </div>
-              <div class="loading-text">
-                <h5 class="text-light mb-2" style="font-weight: 300;">🚀 Preparando Aplicación</h5>
-                <p class="text-light small mb-2" style="opacity: 0.7;">
-                  <i class="fas fa-shield-alt me-1" style="color: #0d6efd !important;"></i>
-                  Inicializando sistema de autenticación segura
-                </p>
-                <p class="text-light small" style="opacity: 0.5;">
-                  <i class="fas fa-clock me-1" style="color: #6c757d !important;"></i>
-                  <span id="countdown-text">Cargando...</span>
-                </p>
-              </div>
-            </div>
+            <button class="btn btn-primary btn-lg"
+                    hx-get="/initial-content"
+                    hx-target="#main-content"
+                    hx-swap="innerHTML">
+              Empezar
+            </button>
           </div>
         </div>
       </main>
@@ -1216,36 +1204,9 @@
         });
       });
 
-      // Countdown simple para 3 segundos
-      let timeLeft = 3;
-      const countdownText = document.getElementById('countdown-text');
-      
-      const updateCountdown = () => {
-        if (countdownText) {
-          if (timeLeft > 0) {
-            countdownText.textContent = `${timeLeft} segundo${timeLeft > 1 ? 's' : ''} restante${timeLeft > 1 ? 's' : ''}`;
-            timeLeft--;
-          } else {
-            countdownText.textContent = 'Cargando contenido...';
-          }
-        }
-      };
-      
-      // Actualizar inmediatamente y luego cada segundo
-      updateCountdown();
-      const countdownInterval = setInterval(updateCountdown, 1000);
-      
-      // Limpiar interval cuando se carga el contenido
-      document.addEventListener('htmx:afterSettle', function(event) {
-        if (event.detail.target.id === 'main-content') {
-          clearInterval(countdownInterval);
-        }
-      });
-
       // Ocultar indicador de carga y mostrar menú cuando se complete la carga del contenido
       document.addEventListener('htmx:afterSettle', function(event) {
         if (event.detail.target.id === 'main-content') {
-          clearInterval(countdownInterval);
           
           const loadingIndicator = document.getElementById('loading-indicator');
           if (loadingIndicator) {
@@ -1331,17 +1292,19 @@
         row.style.backgroundColor = 'rgb(0, 0, 0)';
         row.style.borderBottom = '1px solid rgba(255, 255, 255, 0.1)';
         row.style.margin = '0';
-        row.style.top = `${nav.offsetHeight+16}px`;
-        row.style.justifyContent = 'space-between';
-        row.style.minHeight = '150px';
+        row.style.top = `${nav.offsetHeight+20}px`;
+        row.style.height='fit-content';
+        row.style.maxWidth = '100vw';
+        row.style.overflowX = 'hidden';
+        row.style.boxSizing = 'border-box';
         
 
         const searchHxGet = isMyPhotos ? "/api/buscar-mis-fotos-persona" : "/api/buscar-fotos-persona";
         const verTodasHxGet = isMyPhotos ? "/ver-mis-fotos" : "/ver-todas-fotos";
 
-        row.innerHTML = `
+      row.innerHTML = `
           <!-- Izquierda: buscador + botón ver todas -->
-          <div class="d-flex align-items-center gap-2" >
+          <div class="d-flex align-items-center gap-2 search-and-view" >
             <!-- Input con spinner -->
             <div class="d-flex align-items-center" style="position: relative; flex: 1;">
               <input type="text" 
@@ -1369,7 +1332,7 @@
           </div>
 
           <!-- Derecha: botones de acción -->
-          <div class="d-flex gap-2">
+          <div class="d-flex gap-2 action-buttons">
             <button class="btn btn-primary btn-sm d-flex align-items-center" onclick="subirFoto()">
               <i class="fas fa-plus me-1"></i>Subir Foto
             </button>
@@ -1384,16 +1347,12 @@
             </button>
           </div>
         `;
-
         nav.insertAdjacentElement('afterend', row);
         htmx.process(row);
 
         // Ajustar margen del contenido principal
         const mainContent = document.getElementById('main-content');
-        if (mainContent) {
-          const navbarHeight = nav.offsetHeight + row.offsetHeight;
-          mainContent.style.marginTop = `${navbarHeight}px`;
-        }
+        
 
         // Actualizar posición dinámicamente al redimensionar
         window.addEventListener('resize', () => {
@@ -1442,7 +1401,7 @@
           return { 
             url: img.src, 
             name: title, 
-            fileName: `${title}_${date.replace('/', '-')}.jpg` 
+            fileName: `${title}_${date.replace('/','-')}.jpg` 
           };
         });
 

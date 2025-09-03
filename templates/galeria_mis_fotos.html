@@ -14,7 +14,7 @@
           <i class="fas fa-user-images text-info me-2"></i>
           Mis Fotos
         </h2>
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex flex-column flex-sm-row align-items-center gap-2">
           <select name="buscar_persona" class="custom-select" style="height: 35px; border-radius: 5px;"
                   hx-get="{% if is_my_photos %}/api/buscar-mis-fotos-persona{% else %}/api/buscar-mis-fotos-persona{% endif %}"
                   hx-trigger="change"
@@ -32,6 +32,7 @@
             <option value="retrato">retratos-selfie</option>
             <option value="cumpleaños">cumpleaños</option>
           </select>
+
           <div id="search-spinner" class="htmx-indicator ms-2" style="display: none;">
             <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
           </div>
@@ -52,6 +53,12 @@
                 style="cursor: pointer;">
           <i class="fas fa-arrow-left me-2"></i>Volver
         </button>
+                  <button class="btn btn-info" style="height: 35px; border-radius: 5px;margin-left: 8px;"
+                 hx-get="/gestionar-personas"
+                hx-target="#panel-content"
+                hx-swap="innerHTML"
+            Personas
+          </button>
       </div>
     </div>
   </div>

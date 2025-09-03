@@ -122,23 +122,26 @@
           <i class="fas fa-images text-primary me-2"></i>
           Todas las Fotos
         </h2>
-        <select name="buscar_persona"  class="custom-select" style="height: 35px;border-radius: 5px;"
-                hx-get="{% if is_my_photos %}/api/buscar-mis-fotos-persona{% else %}/api/buscar-fotos-persona{% endif %}"
-                hx-trigger="change"
-                hx-target="#panel-content"
-                hx-swap="innerHTML"
-                hx-indicator="#search-spinner">
-          <option value="">Categorías</option>
-          <option value="familia">familia completa o varios</option>
-          <option value="hermanos">hermanos</option>
-          <option value="boda">bodas</option>
-          <option value="antigua">antigua</option>
-          <option value="vacaciones">vacaciones</option>
-          <option value="fake">fake</option>
-          <option value="amigos">amigos</option>
-          <option value="retrato">retratos-selfie</option>
-          <option value="cumpleaños">cumpleaños</option>
-        </select>
+        <div class="d-flex flex-column flex-sm-row align-items-center gap-2">
+          <select name="buscar_persona"  class="custom-select" style="height: 35px;border-radius: 5px;"
+                  hx-get="{% if is_my_photos %}/api/buscar-mis-fotos-persona{% else %}/api/buscar-fotos-persona{% endif %}"
+                  hx-trigger="change"
+                  hx-target="#panel-content"
+                  hx-swap="innerHTML"
+                  hx-indicator="#search-spinner">
+            <option value="">Categorías</option>
+            <option value="familia">familia completa o varios</option>
+            <option value="hermanos">hermanos</option>
+            <option value="boda">bodas</option>
+            <option value="antigua">antigua</option>
+            <option value="vacaciones">vacaciones</option>
+            <option value="fake">fake</option>
+            <option value="amigos">amigos</option>
+            <option value="retrato">retratos-selfie</option>
+            <option value="cumpleaños">cumpleaños</option>
+          </select>
+        
+        </div>
         <div id="search-spinner" class="htmx-indicator ms-2" style="display: none;">
           <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
         </div>
@@ -155,6 +158,13 @@
         <button class="btn btn-outline-secondary" hx-get="/selector_fotos" hx-target="#panel-content" hx-swap="innerHTML" style="cursor: pointer">
           <i class="fas fa-arrow-left me-2"></i>Volver
         </button>
+         </button>
+                  <button class="btn btn-info" style="height: 35px; border-radius: 5px; margin-left: 8px;"
+                  hx-get="/gestionar-personas"
+                hx-target="#panel-content"
+                hx-swap="innerHTML">
+            Personas
+          </button>
       </div>
     </div>
   </div>
